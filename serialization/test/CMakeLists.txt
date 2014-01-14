@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
+set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/test")
+
 include(FindPkgConfig)
 pkg_search_module(CPPUNIT cppunit)
 if(CPPUNIT_FOUND)

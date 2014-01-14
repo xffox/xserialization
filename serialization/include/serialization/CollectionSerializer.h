@@ -192,8 +192,10 @@ namespace serialization
     std::auto_ptr<ISerializer> CollectionSerializer<Collection>::beginCollection(Context::Type type,
         const Context &context)
     {
-        if(context.getType() == Context::TYPE_INDEX && context.getIndex() < collection.size())
+        if(context.getType() == Context::TYPE_INDEX)
         {
+            if(context.getIndex() >= collection.size())
+                collection.resize(context.getIndex() + 1); // TODO: optimize
             std::auto_ptr<ISerializer> serializer =
                 serialization::beginCollection(collection[context.getIndex()]);
             if(serializer.get() && serializer->contextType() == type)
@@ -206,11 +208,16 @@ namespace serialization
     void CollectionSerializer<Collection>::writeValue(
         const typename Collection::value_type &value, const Context &context)
     {
-        if(context.getType() == Context::TYPE_INDEX &&
-            context.getIndex() < collection.size())
+        if(context.getType() == Context::TYPE_INDEX)
+        {
+            if(context.getIndex() >= collection.size())
+                collection.resize(context.getIndex() + 1); // TODO: optimize
             collection[context.getIndex()] = value;
+        }
         else
+        {
             throw exception::SerializationException(context);
+        }
     }
 
     template<class Collection>

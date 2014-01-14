@@ -14,41 +14,82 @@ namespace
     {
     public:
         Point()
-        :x(0), y(0), s(), b(false)
+            :x(0), y(0)
         {}
-        Point(int x, int y, const std::string &s, bool b)
-        :x(x), y(y), s(s), b(b)
+        Point(int x, int y)
+            :x(x), y(y)
         {}
+
+        Point &operator++()
+        {
+            ++x;
+            return *this;
+        }
+
+        Point operator++(int)
+        {
+            const Point res(*this);
+            this->operator++();
+            return res;
+        }
 
         SERIALIZABLE_FIELD(int, x);
         SERIALIZABLE_FIELD(int, y);
-        SERIALIZABLE_FIELD(std::string, s);
-        SERIALIZABLE_FIELD(bool, b);
-        SERIALIZABLE_FIELD(std::vector<int>, v);
     };
 
     SERIALIZABLE_CLASS(Line)
     {
     public:
         Line()
-        :begin(), end()
+            :begin(), end()
         {}
         Line(const Point &begin, const Point &end)
-        :begin(begin), end(end)
+            :begin(begin), end(end)
         {}
 
         SERIALIZABLE_FIELD(Point, begin);
         SERIALIZABLE_FIELD(Point, end);
     };
 
+    SERIALIZABLE_CLASS(Vector)
+    {
+    public:
+        typedef std::vector<int> ValueType;
+
+    public:
+        Vector()
+        :v()
+        {}
+        Vector(const std::vector<int> &v)
+        :v(v)
+        {}
+
+        SERIALIZABLE_FIELD(std::vector<int>, v);
+    };
+
+    SERIALIZABLE_CLASS(PointVector)
+    {
+    public:
+        typedef std::vector<Point> ValueType;
+
+    public:
+        PointVector()
+        :v()
+        {}
+        PointVector(const std::vector<Point> &v)
+        :v(v)
+        {}
+
+        SERIALIZABLE_FIELD(std::vector<Point>, v);
+    };
+
     class StringSerializer: public serialization::ISerializer
     {
     public:
         StringSerializer(std::ostream &ostream)
-            :first(true), type(serialization::Context::TYPE_NAME),
+            :first(true), type(serialization::Context::TYPE_NONE),
             ostream(ostream)
         {
-            ostream<<"{";
         }
 
         StringSerializer(std::ostream &ostream, serialization::Context::Type type,
@@ -195,18 +236,34 @@ namespace
         StringSerializer serializer(ostream);
         serializer<<value;
     }
+
+    template<typename T>
+    T generate(const typename T::value_type &first,
+        const std::size_t count)
+    {
+        T res;
+        typename T::value_type current(first);
+        for(std::size_t i = 0; i < count; ++i)
+            res.push_back(current++);
+        return res;
+    }
 }
 
 int main()
 {
     std::stringstream ostream;
-    Point p(42, 43, "foobar", true);
-    p.v.push_back(12);
-    p.v.push_back(13);
+    Point p(42, 43);
     print(ostream, p);
     ostream<<std::endl;
-    Line l(Point(1, 2, "a", false), Point(3, 4, "b", true));
+    Line l(Point(1, 2), Point(3, 4));
     print(ostream, l);
+    ostream<<std::endl;
+    Vector v(generate<Vector::ValueType>(42, 10));
+    print(ostream, v);
+    ostream<<std::endl;
+    PointVector pv(generate<PointVector::ValueType>(Point(), 10));
+    print(ostream, pv);
+
     std::cout<<ostream.str()<<std::endl;
     return 0;
 }

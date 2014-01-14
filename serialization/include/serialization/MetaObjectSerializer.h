@@ -12,8 +12,8 @@ namespace serialization
     public:
         MetaObjectSerializer(MetaObject &object);
 
-        virtual std::auto_ptr<ISerializer> beginNamedCollection(const Context &context);
-        virtual std::auto_ptr<ISerializer> beginIndexedCollection(const Context &context);
+        virtual std::auto_ptr<ISerializer> beginCollection(Context::Type type,
+            const Context &context);
 
         virtual Context::Type contextType() const;
 

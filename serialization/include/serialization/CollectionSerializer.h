@@ -164,8 +164,8 @@ namespace serialization
         {
         }
 
-        virtual std::auto_ptr<ISerializer> beginNamedCollection(const Context &context);
-        virtual std::auto_ptr<ISerializer> beginIndexedCollection(const Context &context);
+        virtual std::auto_ptr<ISerializer> beginCollection(Context::Type type,
+            const Context &context);
 
         virtual Context::Type contextType() const
         {
@@ -189,26 +189,14 @@ namespace serialization
     };
 
     template<class Collection>
-    std::auto_ptr<ISerializer> CollectionSerializer<Collection>::beginNamedCollection(const Context &context)
+    std::auto_ptr<ISerializer> CollectionSerializer<Collection>::beginCollection(Context::Type type,
+        const Context &context)
     {
         if(context.getType() == Context::TYPE_INDEX && context.getIndex() < collection.size())
         {
             std::auto_ptr<ISerializer> serializer =
-                beginCollection(collection[context.getIndex()]);
-            if(serializer.get() && serializer->contextType() == Context::TYPE_NAME)
-                return serializer;
-        }
-        throw exception::SerializationException(context);
-    }
-
-    template<class Collection>
-    std::auto_ptr<ISerializer> CollectionSerializer<Collection>::beginIndexedCollection(const Context &context)
-    {
-        if(context.getType() == Context::TYPE_INDEX && context.getIndex() < collection.size())
-        {
-            std::auto_ptr<ISerializer> serializer =
-                beginCollection(collection[context.getIndex()]);
-            if(serializer.get() && serializer->contextType() == Context::TYPE_INDEX)
+                serialization::beginCollection(collection[context.getIndex()]);
+            if(serializer.get() && serializer->contextType() == type)
                 return serializer;
         }
         throw exception::SerializationException(context);
@@ -229,7 +217,7 @@ namespace serialization
     void CollectionSerializer<Collection>::visit(ISerializer &serializer, const serialization::Context &context) const
     {
         std::auto_ptr<serialization::ISerializer> s =
-            serializer.beginIndexedCollection(context);
+            serializer.beginCollection(Context::TYPE_INDEX, context);
         assert(s.get());
         for(std::size_t i = 0; i < collection.size(); ++i)
             serialization::write(*s, collection[i], i);

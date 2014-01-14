@@ -25,34 +25,20 @@ namespace serialization
         :object(object)
     {}
 
-    std::auto_ptr<ISerializer> MetaObjectSerializer::beginNamedCollection(const Context &context)
+    std::auto_ptr<ISerializer> MetaObjectSerializer::beginCollection(
+        Context::Type type, const Context &context)
     {
         if(context.getType() == Context::TYPE_NAME)
         {
             std::auto_ptr<ISerializer> serializer =
                 object.beginCollection(context.getName());
-            if(serializer.get() && serializer->contextType() == Context::TYPE_NAME)
+            if(serializer.get() && serializer->contextType() == type)
                 return serializer;
         }
         else if(context.getType() == Context::TYPE_NONE)
         {
-            return std::auto_ptr<ISerializer>(new MetaObjectSerializer(object));
-        }
-        throw exception::SerializationException(context);
-    }
-
-    std::auto_ptr<ISerializer> MetaObjectSerializer::beginIndexedCollection(const Context &context)
-    {
-        if(context.getType() == Context::TYPE_NAME)
-        {
-            std::auto_ptr<ISerializer> serializer =
-                object.beginCollection(context.getName());
-            if(serializer.get() && serializer->contextType() == Context::TYPE_INDEX)
-                return serializer;
-        }
-        else if(context.getType() == Context::TYPE_NONE)
-        {
-            return std::auto_ptr<ISerializer>(new MetaObjectSerializer(object));
+            return std::auto_ptr<ISerializer>(
+                new MetaObjectSerializer(object));
         }
         throw exception::SerializationException(context);
     }
@@ -153,10 +139,10 @@ namespace serialization
     }
 
     void MetaObjectSerializer::visit(ISerializer &serializer,
-        const serialization::Context &context) const
+        const Context &context) const
     {
         std::auto_ptr<serialization::ISerializer> s =
-            serializer.beginNamedCollection(context);
+            serializer.beginCollection(Context::TYPE_NAME, context);
         assert(s.get());
         object.visit(*s);
     }

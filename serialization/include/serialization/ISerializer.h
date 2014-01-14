@@ -13,8 +13,8 @@ namespace serialization
     public:
         virtual ~ISerializer(){}
 
-        virtual std::auto_ptr<ISerializer> beginNamedCollection(const Context &context) = 0;
-        virtual std::auto_ptr<ISerializer> beginIndexedCollection(const Context &context) = 0;
+        virtual std::auto_ptr<ISerializer> beginCollection(Context::Type type,
+            const Context &context) = 0;
 
         virtual Context::Type contextType() const = 0;
 

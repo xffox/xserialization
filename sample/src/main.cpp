@@ -71,17 +71,13 @@ namespace
                 ostream<<']';
         }
 
-        virtual std::auto_ptr<serialization::ISerializer> beginNamedCollection(const serialization::Context &context)
+        virtual std::auto_ptr<serialization::ISerializer> beginCollection(
+            serialization::Context::Type type,
+            const serialization::Context &context)
         {
             writeSeparator();
-            return std::auto_ptr<serialization::ISerializer>(new StringSerializer(ostream,
-                    serialization::Context::TYPE_NAME, context));
-        }
-        virtual std::auto_ptr<serialization::ISerializer> beginIndexedCollection(const serialization::Context &context)
-        {
-            writeSeparator();
-            return std::auto_ptr<serialization::ISerializer>(new StringSerializer(ostream,
-                    serialization::Context::TYPE_INDEX, context));
+            return std::auto_ptr<serialization::ISerializer>(
+                new StringSerializer(ostream, type, context));
         }
 
         virtual serialization::Context::Type contextType() const

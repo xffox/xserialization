@@ -12,6 +12,7 @@ set(SERIALIZATION_SRCS
     "src/serialization.cpp"
     "src/factory.cpp"
     "src/MetaObjectSerializer.cpp"
+    "src/MetaObjectDeserializer.cpp"
     )
 
 include_directories(${SERIALIZATION_INCLUDES})

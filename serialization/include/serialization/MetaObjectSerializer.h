@@ -37,9 +37,6 @@ namespace serialization
         virtual void write(const std::string &value,
             const Context &context);
 
-        virtual void visit(ISerializer &serializer,
-            const serialization::Context &context) const;
-
     private:
         MetaObject &object;
     };

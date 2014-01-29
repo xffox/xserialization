@@ -177,9 +177,6 @@ namespace serialization
             throw exception::SerializationException(context);
         }
 
-        virtual void visit(ISerializer &serializer,
-            const serialization::Context &context) const;
-
     protected:
         virtual void writeValue(const typename Collection::value_type &value,
             const Context &context);
@@ -218,16 +215,6 @@ namespace serialization
         {
             throw exception::SerializationException(context);
         }
-    }
-
-    template<class Collection>
-    void CollectionSerializer<Collection>::visit(ISerializer &serializer, const serialization::Context &context) const
-    {
-        std::auto_ptr<serialization::ISerializer> s =
-            serializer.beginCollection(Context::TYPE_INDEX, context);
-        assert(s.get());
-        for(std::size_t i = 0; i < collection.size(); ++i)
-            serialization::write(*s, collection[i], i);
     }
 }
 

@@ -38,9 +38,6 @@ namespace serialization
         virtual void write(long double value, const Context &context) = 0;
         // TODO: really had to separate the string type
         virtual void write(const std::string &value, const Context &context) = 0;
-
-        virtual void visit(ISerializer &serializer,
-            const serialization::Context &context) const = 0;
     };
 }
 

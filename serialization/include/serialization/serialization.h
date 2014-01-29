@@ -7,11 +7,12 @@
 #include <stdint.h>
 #include <vector>
 
+#include "serialization/ISerializer.h"
+#include "serialization/IDeserializer.h"
 #include "serialization/exception/SerializationException.h"
 
 namespace serialization
 {
-    class ISerializer;
     class MetaObject;
     class Context;
 
@@ -69,14 +70,14 @@ namespace serialization
     std::auto_ptr<ISerializer> beginCollection(float value);
     std::auto_ptr<ISerializer> beginCollection(double value);
     std::auto_ptr<ISerializer> beginCollection(long double value);
-    std::auto_ptr<ISerializer> beginCollection(const std::string &value);
+    std::auto_ptr<ISerializer> beginCollection(std::string &value);
     template<typename T>
-    std::auto_ptr<ISerializer> beginCollection(const T &value);
+    std::auto_ptr<ISerializer> beginCollection(T &value);
 }
 
 void operator<<(serialization::ISerializer &serializer,
     const serialization::MetaObject &object);
-void operator>>(const serialization::ISerializer &serializer,
+void operator>>(const serialization::IDeserializer &deserializer,
     serialization::MetaObject &object);
 
 #include "serialization/factory.h"
@@ -87,14 +88,14 @@ namespace serialization
     void write(ISerializer &serializer,
         const T &value, const Context &context)
     {
-        std::auto_ptr<ISerializer> s(factory::createSerializer(value));
+        std::auto_ptr<IDeserializer> s(factory::createDeserializer(value));
         if(!s.get())
             throw exception::SerializationException(context);
         s->visit(serializer, context);
     }
 
     template<typename T>
-    std::auto_ptr<ISerializer> beginCollection(const T &value)
+    std::auto_ptr<ISerializer> beginCollection(T &value)
     {
         return factory::createSerializer(value);
     }

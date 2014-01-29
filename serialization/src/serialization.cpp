@@ -119,7 +119,7 @@ namespace serialization
     {return std::auto_ptr<ISerializer>();}
     std::auto_ptr<ISerializer> beginCollection(long double)
     {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(const std::string&)
+    std::auto_ptr<ISerializer> beginCollection(std::string&)
     {return std::auto_ptr<ISerializer>();}
 }
 
@@ -129,9 +129,9 @@ void operator<<(serialization::ISerializer &serializer,
     write(serializer, object, serialization::Context());
 }
 
-void operator>>(const serialization::ISerializer &serializer,
+void operator>>(const serialization::IDeserializer &deserializer,
     serialization::MetaObject &object)
 {
     serialization::MetaObjectSerializer s(object);
-    serializer.visit(s, serialization::Context());
+    deserializer.visit(s, serialization::Context());
 }

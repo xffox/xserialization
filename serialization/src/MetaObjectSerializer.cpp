@@ -137,13 +137,4 @@ namespace serialization
     {
         writeByName(object, value, context);
     }
-
-    void MetaObjectSerializer::visit(ISerializer &serializer,
-        const Context &context) const
-    {
-        std::auto_ptr<serialization::ISerializer> s =
-            serializer.beginCollection(Context::TYPE_NAME, context);
-        assert(s.get());
-        object.visit(*s);
-    }
 }

@@ -4,6 +4,7 @@
 
 #include "serialization/MetaObject.h"
 #include "serialization/MetaObjectSerializer.h"
+#include "serialization/MetaObjectDeserializer.h"
 #include "serialization/serialization.h"
 
 #define VALUE(cl, type) \
@@ -269,7 +270,7 @@ namespace serialization
                 T v(value);
                 const T expected(v);
                 T actual;
-                MetaObjectSerializer serializer(v);
+                MetaObjectDeserializer serializer(v);
                 serializer>>actual;
                 return expected == actual;
             }

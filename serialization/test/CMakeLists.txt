@@ -16,8 +16,7 @@ if(CPPUNIT_FOUND)
     target_link_libraries(${SERIALIZATION_TEST_NAME} ${SERIALIZATION_LIBS}
         ${CPPUNIT_LIBRARIES})
 
-    get_target_property(SERIALIZATION_TEST_PATH ${SERIALIZATION_TEST_NAME} LOCATION)
-    add_test(SerializationTest "${SERIALIZATION_TEST_PATH}")
+    add_test(NAME SerializationTest COMMAND ${SERIALIZATION_TEST_NAME})
 else(CPPUNIT_FOUND)
     message(WARNING "cppunit not found - testing is not available")
 endif(CPPUNIT_FOUND)

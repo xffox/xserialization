@@ -4,7 +4,6 @@
 
 #include "serialization/MetaObject.h"
 #include "serialization/MetaObjectSerializer.h"
-#include "serialization/MetaObjectDeserializer.h"
 #include "serialization/serialization.h"
 
 #define VALUE(cl, type) \
@@ -160,6 +159,7 @@ namespace serialization
             CPPUNIT_TEST(testDeserializeCollectionPlain);
             CPPUNIT_TEST(testSerializeCollectionComplex);
             CPPUNIT_TEST(testDeserializeCollectionComplex);
+            CPPUNIT_TEST(testClassName);
             CPPUNIT_TEST_SUITE_END();
         public:
             void testSerializePlain()
@@ -252,6 +252,16 @@ namespace serialization
                             generate<PointVector::ValueType>(Point(), 10))));
             }
 
+            void testClassName()
+            {
+                CPPUNIT_ASSERT_EQUAL(std::string("Point"),
+                    std::string(Point::getClassName()));
+                CPPUNIT_ASSERT_EQUAL(std::string("Line"),
+                    std::string(Line::getClassName()));
+                CPPUNIT_ASSERT_EQUAL(std::string("Vector"),
+                    std::string(Vector::getClassName()));
+            }
+
         private:
             template<typename T>
             bool validateSerialization(const T &value)
@@ -270,7 +280,7 @@ namespace serialization
                 T v(value);
                 const T expected(v);
                 T actual;
-                MetaObjectDeserializer serializer(v);
+                MetaObjectSerializer serializer(static_cast<T&>(v));
                 serializer>>actual;
                 return expected == actual;
             }

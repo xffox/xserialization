@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "serialization/ISerializer.h"
-#include "serialization/IDeserializer.h"
 
 namespace serialization
 {
@@ -14,20 +13,28 @@ namespace serialization
     namespace factory
     {
         std::auto_ptr<ISerializer> createSerializer(MetaObject &value);
+        inline std::auto_ptr<const ISerializer> createSerializer(
+            const MetaObject &value)
+        {
+            return std::auto_ptr<const ISerializer>(
+                createSerializer(const_cast<MetaObject&>(value)).release());
+        }
+
         template<typename T>
         std::auto_ptr<ISerializer> createSerializer(
             std::vector<T> &value);
-
-        std::auto_ptr<IDeserializer> createDeserializer(
-            const MetaObject &value);
         template<typename T>
-        std::auto_ptr<IDeserializer> createDeserializer(
-            const std::vector<T> &value);
+        inline std::auto_ptr<const ISerializer> createSerializer(
+            const std::vector<T> &value)
+        {
+            return std::auto_ptr<const ISerializer>(
+                createSerializer(const_cast<std::vector<T>&>(
+                        value)).release());
+        }
     }
 }
 
 #include "serialization/CollectionSerializer.h"
-#include "serialization/CollectionDeserializer.h"
 
 namespace serialization
 {
@@ -38,14 +45,6 @@ namespace serialization
         {
             return std::auto_ptr<ISerializer>(
                 new CollectionSerializer<std::vector<T> >(value));
-        }
-
-        template<typename T>
-        std::auto_ptr<IDeserializer> createDeserializer(
-            const std::vector<T> &value)
-        {
-            return std::auto_ptr<IDeserializer>(
-                new CollectionDeserializer<std::vector<T> >(value));
         }
     }
 }

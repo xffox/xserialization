@@ -43,6 +43,17 @@ namespace serialization
         throw exception::SerializationException(context);
     }
 
+    void MetaObjectSerializer::visit(ISerializer &serializer,
+        const serialization::Context &context) const
+    {
+        std::auto_ptr<serialization::ISerializer> s =
+            serializer.beginCollection(Context::TYPE_NAME, context);
+        if(s.get())
+            object.visit(*s);
+        else
+            throw exception::SerializationException(context);
+    }
+
     Context::Type MetaObjectSerializer::contextType() const
     {
         return Context::TYPE_NAME;

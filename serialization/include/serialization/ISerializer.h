@@ -15,11 +15,14 @@ namespace serialization
 
         virtual std::auto_ptr<ISerializer> beginCollection(Context::Type type,
             const Context &context) = 0;
+        
+        virtual void visit(ISerializer &serializer,
+            const serialization::Context &context) const = 0;
 
         virtual Context::Type contextType() const = 0;
 
         // TODO: add value container type, prevent interface grow
-        virtual void writeNull(const Context &context) = 0;
+//      virtual void writeNull(const Context &context) = 0;
 
         virtual void write(bool value, const Context &context) = 0;
         virtual void write(char value, const Context &context) = 0;

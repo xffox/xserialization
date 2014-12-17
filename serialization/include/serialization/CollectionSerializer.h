@@ -167,6 +167,9 @@ namespace serialization
         virtual std::auto_ptr<ISerializer> beginCollection(Context::Type type,
             const Context &context);
 
+        virtual void visit(ISerializer &serializer,
+            const serialization::Context &context) const;
+
         virtual Context::Type contextType() const
         {
             return Context::TYPE_INDEX;
@@ -215,6 +218,19 @@ namespace serialization
         {
             throw exception::SerializationException(context);
         }
+    }
+
+    template<class Collection>
+    void CollectionSerializer<Collection>::visit(ISerializer &serializer,
+        const serialization::Context &context) const
+    {
+        std::auto_ptr<serialization::ISerializer> s =
+            serializer.beginCollection(Context::TYPE_INDEX, context);
+        if(s.get())
+            for(std::size_t i = 0; i < collection.size(); ++i)
+                serialization::write(*s, collection[i], i);
+        else
+            throw exception::SerializationException(context);
     }
 }
 

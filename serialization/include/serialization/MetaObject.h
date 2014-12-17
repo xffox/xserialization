@@ -228,7 +228,15 @@ namespace serialization
 
 // TODO: probably add class name field
 #define SERIALIZABLE_CLASS(cl) \
-    class cl: public serialization::MetaObjectBase<cl>
+    class _##cl##ClassName \
+    { \
+    public: \
+        static const char *getClassName() \
+        { \
+            return #cl; \
+        } \
+    }; \
+    class cl: public serialization::MetaObjectBase<cl>, public _##cl##ClassName
 
 #define SERIALIZABLE_FIELD(type, name) \
     struct name##FieldType: \

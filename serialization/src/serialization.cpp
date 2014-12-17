@@ -129,7 +129,7 @@ void operator<<(serialization::ISerializer &serializer,
     write(serializer, object, serialization::Context());
 }
 
-void operator>>(const serialization::IDeserializer &deserializer,
+void operator>>(const serialization::ISerializer &deserializer,
     serialization::MetaObject &object)
 {
     serialization::MetaObjectSerializer s(object);

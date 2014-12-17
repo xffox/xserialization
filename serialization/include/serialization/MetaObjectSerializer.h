@@ -15,6 +15,9 @@ namespace serialization
         virtual std::auto_ptr<ISerializer> beginCollection(Context::Type type,
             const Context &context);
 
+        virtual void visit(ISerializer &serializer,
+            const serialization::Context &context) const;
+
         virtual Context::Type contextType() const;
 
         virtual void writeNull(const Context &context);

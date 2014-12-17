@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "serialization/ISerializer.h"
-#include "serialization/IDeserializer.h"
 #include "serialization/exception/SerializationException.h"
 
 namespace serialization
@@ -77,7 +76,7 @@ namespace serialization
 
 void operator<<(serialization::ISerializer &serializer,
     const serialization::MetaObject &object);
-void operator>>(const serialization::IDeserializer &deserializer,
+void operator>>(const serialization::ISerializer &deserializer,
     serialization::MetaObject &object);
 
 #include "serialization/factory.h"
@@ -88,7 +87,7 @@ namespace serialization
     void write(ISerializer &serializer,
         const T &value, const Context &context)
     {
-        std::auto_ptr<IDeserializer> s(factory::createDeserializer(value));
+        std::auto_ptr<const ISerializer> s(factory::createSerializer(value));
         if(!s.get())
             throw exception::SerializationException(context);
         s->visit(serializer, context);

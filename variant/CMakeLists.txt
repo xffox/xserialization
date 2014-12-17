@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8)
+
+set(VARIANT_NAME "variant")
+
+set(VARIANT_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(VARIANT_INCLUDES ${VARIANT_INCLUDES} PARENT_SCOPE)

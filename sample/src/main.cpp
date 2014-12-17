@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include <ostream>
 #include <sstream>
@@ -7,6 +8,7 @@
 #include "serialization/serialization.h"
 #include "serialization/ISerializer.h"
 #include "serialization/exception/SerializationException.h"
+#include "variant/Variant.h"
 
 namespace
 {
@@ -126,10 +128,6 @@ namespace
             return type;
         }
 
-        virtual void writeNull(const serialization::Context&)
-        {
-        }
-
         virtual void write(bool value, const serialization::Context &context)
         {
             writeValue(value, context);
@@ -233,6 +231,7 @@ namespace
     template<typename T>
     void print(std::ostream &ostream, const T &value)
     {
+        ostream<<value.getClassName()<<": ";
         StringSerializer serializer(ostream);
         serializer<<value;
     }
@@ -263,7 +262,11 @@ int main()
     ostream<<std::endl;
     PointVector pv(generate<PointVector::ValueType>(Point(), 10));
     print(ostream, pv);
-
     std::cout<<ostream.str()<<std::endl;
+
+    variant::Variant answer(42);
+    variant::Variant other(42);
+    assert(answer == other);
+
     return 0;
 }

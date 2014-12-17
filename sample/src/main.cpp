@@ -114,7 +114,7 @@ namespace
                 ostream<<']';
         }
 
-        virtual std::auto_ptr<serialization::ISerializer> beginCollection(
+        virtual std::unique_ptr<serialization::ISerializer> beginCollection(
             serialization::Context::Type type,
             const serialization::Context &context)
         {

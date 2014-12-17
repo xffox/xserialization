@@ -164,7 +164,7 @@ namespace serialization
         {
         }
 
-        virtual std::auto_ptr<ISerializer> beginCollection(Context::Type type,
+        virtual std::unique_ptr<ISerializer> beginCollection(Context::Type type,
             const Context &context);
 
         virtual void visit(ISerializer &serializer,
@@ -189,14 +189,15 @@ namespace serialization
     };
 
     template<class Collection>
-    std::auto_ptr<ISerializer> CollectionSerializer<Collection>::beginCollection(Context::Type type,
+    std::unique_ptr<ISerializer>
+    CollectionSerializer<Collection>::beginCollection(Context::Type type,
         const Context &context)
     {
         if(context.getType() == Context::TYPE_INDEX)
         {
             if(context.getIndex() >= collection.size())
                 collection.resize(context.getIndex() + 1); // TODO: optimize
-            std::auto_ptr<ISerializer> serializer =
+            std::unique_ptr<ISerializer> serializer =
                 serialization::beginCollection(collection[context.getIndex()]);
             if(serializer.get() && serializer->contextType() == type)
                 return serializer;
@@ -224,7 +225,7 @@ namespace serialization
     void CollectionSerializer<Collection>::visit(ISerializer &serializer,
         const serialization::Context &context) const
     {
-        std::auto_ptr<serialization::ISerializer> s =
+        std::unique_ptr<serialization::ISerializer> s =
             serializer.beginCollection(Context::TYPE_INDEX, context);
         if(s.get())
             for(std::size_t i = 0; i < collection.size(); ++i)

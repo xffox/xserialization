@@ -54,24 +54,24 @@ namespace serialization
         const T &value, const Context &context);
 
     // TODO: can use type traits to find "value" types
-    std::auto_ptr<ISerializer> beginCollection(bool value);
-    std::auto_ptr<ISerializer> beginCollection(char value);
-    std::auto_ptr<ISerializer> beginCollection(signed char value);
-    std::auto_ptr<ISerializer> beginCollection(unsigned char value);
-    std::auto_ptr<ISerializer> beginCollection(short value);
-    std::auto_ptr<ISerializer> beginCollection(unsigned short value);
-    std::auto_ptr<ISerializer> beginCollection(int value);
-    std::auto_ptr<ISerializer> beginCollection(unsigned int value);
-    std::auto_ptr<ISerializer> beginCollection(long value);
-    std::auto_ptr<ISerializer> beginCollection(unsigned long value);
-    std::auto_ptr<ISerializer> beginCollection(long long value);
-    std::auto_ptr<ISerializer> beginCollection(unsigned long long value);
-    std::auto_ptr<ISerializer> beginCollection(float value);
-    std::auto_ptr<ISerializer> beginCollection(double value);
-    std::auto_ptr<ISerializer> beginCollection(long double value);
-    std::auto_ptr<ISerializer> beginCollection(std::string &value);
+    std::unique_ptr<ISerializer> beginCollection(bool value);
+    std::unique_ptr<ISerializer> beginCollection(char value);
+    std::unique_ptr<ISerializer> beginCollection(signed char value);
+    std::unique_ptr<ISerializer> beginCollection(unsigned char value);
+    std::unique_ptr<ISerializer> beginCollection(short value);
+    std::unique_ptr<ISerializer> beginCollection(unsigned short value);
+    std::unique_ptr<ISerializer> beginCollection(int value);
+    std::unique_ptr<ISerializer> beginCollection(unsigned int value);
+    std::unique_ptr<ISerializer> beginCollection(long value);
+    std::unique_ptr<ISerializer> beginCollection(unsigned long value);
+    std::unique_ptr<ISerializer> beginCollection(long long value);
+    std::unique_ptr<ISerializer> beginCollection(unsigned long long value);
+    std::unique_ptr<ISerializer> beginCollection(float value);
+    std::unique_ptr<ISerializer> beginCollection(double value);
+    std::unique_ptr<ISerializer> beginCollection(long double value);
+    std::unique_ptr<ISerializer> beginCollection(std::string &value);
     template<typename T>
-    std::auto_ptr<ISerializer> beginCollection(T &value);
+    std::unique_ptr<ISerializer> beginCollection(T &value);
 }
 
 void operator<<(serialization::ISerializer &serializer,
@@ -87,14 +87,14 @@ namespace serialization
     void write(ISerializer &serializer,
         const T &value, const Context &context)
     {
-        std::auto_ptr<const ISerializer> s(factory::createSerializer(value));
+        std::unique_ptr<const ISerializer> s(factory::createSerializer(value));
         if(!s.get())
             throw exception::SerializationException(context);
         s->visit(serializer, context);
     }
 
     template<typename T>
-    std::auto_ptr<ISerializer> beginCollection(T &value)
+    std::unique_ptr<ISerializer> beginCollection(T &value)
     {
         return factory::createSerializer(value);
     }

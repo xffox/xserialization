@@ -18,7 +18,7 @@ namespace serialization
         virtual ~MetaObject(){}
 
         virtual void visit(ISerializer &serializer) const = 0;
-        virtual std::auto_ptr<ISerializer> beginCollection(
+        virtual std::unique_ptr<ISerializer> beginCollection(
             const std::string &name) = 0;
         virtual bool writeNull(const std::string &name) = 0;
         virtual bool write(const std::string &name, bool value) = 0;
@@ -47,7 +47,7 @@ namespace serialization
             virtual void visit(ISerializer &serializer,
                 const MetaObject &object) = 0;
 
-            virtual std::auto_ptr<ISerializer> beginCollection(
+            virtual std::unique_ptr<ISerializer> beginCollection(
                 MetaObject &object) = 0;
 
             virtual bool write(MetaObject&, bool)
@@ -124,7 +124,7 @@ namespace serialization
     public:
         virtual void visit(ISerializer &serializer) const;
         virtual bool writeNull(const std::string &name);
-        virtual std::auto_ptr<ISerializer> beginCollection(
+        virtual std::unique_ptr<ISerializer> beginCollection(
             const std::string &name);
         virtual bool write(const std::string &name, bool value)
         { return writeValue(name, value); }
@@ -196,13 +196,13 @@ namespace serialization
     }
 
     template<typename T>
-    std::auto_ptr<ISerializer> MetaObjectBase<T>::beginCollection(
+    std::unique_ptr<ISerializer> MetaObjectBase<T>::beginCollection(
         const std::string &name)
     {
         FieldMap::iterator iter = getFields().find(name);
         if(iter != getFields().end())
             return iter->second->beginCollection(*this);
-        return std::auto_ptr<ISerializer>();
+        return std::unique_ptr<ISerializer>();
     }
 
     template<typename T>
@@ -257,7 +257,7 @@ namespace serialization
             static_cast<BaseClass&>(object).name = value; \
             return true; \
         } \
-        virtual std::auto_ptr<serialization::ISerializer> beginCollection( \
+        virtual std::unique_ptr<serialization::ISerializer> beginCollection( \
             MetaObject &object) \
         { \
             return serialization::beginCollection( \

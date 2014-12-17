@@ -12,8 +12,8 @@ namespace serialization
     public:
         MetaObjectSerializer(MetaObject &object);
 
-        virtual std::auto_ptr<ISerializer> beginCollection(Context::Type type,
-            const Context &context);
+        virtual std::unique_ptr<ISerializer> beginCollection(
+            Context::Type type, const Context &context);
 
         virtual void visit(ISerializer &serializer,
             const serialization::Context &context) const;

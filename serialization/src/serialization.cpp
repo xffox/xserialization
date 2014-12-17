@@ -89,38 +89,38 @@ namespace serialization
         serializer.write(value, context);
     }
 
-    std::auto_ptr<ISerializer> beginCollection(bool)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(char)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(signed char)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(unsigned char)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(short)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(unsigned short)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(int)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(unsigned int)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(long)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(unsigned long)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(long long)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(unsigned long long)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(float)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(double)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(long double)
-    {return std::auto_ptr<ISerializer>();}
-    std::auto_ptr<ISerializer> beginCollection(std::string&)
-    {return std::auto_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(bool)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(char)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(signed char)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(unsigned char)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(short)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(unsigned short)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(int)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(unsigned int)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(long)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(unsigned long)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(long long)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(unsigned long long)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(float)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(double)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(long double)
+    {return std::unique_ptr<ISerializer>();}
+    std::unique_ptr<ISerializer> beginCollection(std::string&)
+    {return std::unique_ptr<ISerializer>();}
 }
 
 void operator<<(serialization::ISerializer &serializer,

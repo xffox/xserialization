@@ -12,22 +12,22 @@ namespace serialization
 
     namespace factory
     {
-        std::auto_ptr<ISerializer> createSerializer(MetaObject &value);
-        inline std::auto_ptr<const ISerializer> createSerializer(
+        std::unique_ptr<ISerializer> createSerializer(MetaObject &value);
+        inline std::unique_ptr<const ISerializer> createSerializer(
             const MetaObject &value)
         {
-            return std::auto_ptr<const ISerializer>(
+            return std::unique_ptr<const ISerializer>(
                 createSerializer(const_cast<MetaObject&>(value)).release());
         }
 
         template<typename T>
-        std::auto_ptr<ISerializer> createSerializer(
+        std::unique_ptr<ISerializer> createSerializer(
             std::vector<T> &value);
         template<typename T>
-        inline std::auto_ptr<const ISerializer> createSerializer(
+        inline std::unique_ptr<const ISerializer> createSerializer(
             const std::vector<T> &value)
         {
-            return std::auto_ptr<const ISerializer>(
+            return std::unique_ptr<const ISerializer>(
                 createSerializer(const_cast<std::vector<T>&>(
                         value)).release());
         }
@@ -41,9 +41,9 @@ namespace serialization
     namespace factory
     {
         template<typename T>
-        std::auto_ptr<ISerializer> createSerializer(std::vector<T> &value)
+        std::unique_ptr<ISerializer> createSerializer(std::vector<T> &value)
         {
-            return std::auto_ptr<ISerializer>(
+            return std::unique_ptr<ISerializer>(
                 new CollectionSerializer<std::vector<T> >(value));
         }
     }

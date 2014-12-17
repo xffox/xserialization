@@ -13,7 +13,7 @@ namespace serialization
     public:
         virtual ~ISerializer(){}
 
-        virtual std::auto_ptr<ISerializer> beginCollection(Context::Type type,
+        virtual std::unique_ptr<ISerializer> beginCollection(Context::Type type,
             const Context &context) = 0;
         
         virtual void visit(ISerializer &serializer,

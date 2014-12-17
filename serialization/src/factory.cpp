@@ -6,9 +6,9 @@ namespace serialization
 {
     namespace factory
     {
-        std::auto_ptr<ISerializer> createSerializer(MetaObject &value)
+        std::unique_ptr<ISerializer> createSerializer(MetaObject &value)
         {
-            return std::auto_ptr<ISerializer>(new MetaObjectSerializer(
+            return std::unique_ptr<ISerializer>(new MetaObjectSerializer(
                     value));
         }
     }

@@ -263,10 +263,5 @@ int main()
     PointVector pv(generate<PointVector::ValueType>(Point(), 10));
     print(ostream, pv);
     std::cout<<ostream.str()<<std::endl;
-
-    variant::Variant answer(42);
-    variant::Variant other(42);
-    assert(answer == other);
-
     return 0;
 }

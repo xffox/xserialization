@@ -122,16 +122,3 @@ namespace serialization
     std::unique_ptr<ISerializer> beginCollection(std::string&)
     {return std::unique_ptr<ISerializer>();}
 }
-
-void operator<<(serialization::ISerializer &serializer,
-    const serialization::MetaObject &object)
-{
-    write(serializer, object, serialization::Context());
-}
-
-void operator>>(const serialization::ISerializer &deserializer,
-    serialization::MetaObject &object)
-{
-    serialization::MetaObjectSerializer s(object);
-    deserializer.visit(s, serialization::Context());
-}

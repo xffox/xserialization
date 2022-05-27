@@ -21,9 +21,11 @@ namespace variant
         template<typename T>
         explicit BaseVariant(const T &value);
         BaseVariant(const BaseVariant &that);
+        BaseVariant(BaseVariant &&that);
         virtual ~BaseVariant();
 
         BaseVariant &operator=(const BaseVariant &that);
+        BaseVariant &operator=(BaseVariant &&that);
 
         template<typename T>
         static BaseVariant make(const T &value);
@@ -70,31 +72,79 @@ namespace variant
 
     template<class Type>
     BaseVariant<Type>::BaseVariant(const BaseVariant &that)
-        :type(that.type), data(0)
+        :type(that.type), data(nullptr)
     {
-        assert(type);
-        assert(that.data);
-        data = type->clone(that.data);
-        assert(data);
+        if(type)
+        {
+            assert(that.data);
+            data = type->clone(that.data);
+            assert(data);
+        }
+    }
+
+    template<class Type>
+    BaseVariant<Type>::BaseVariant(BaseVariant &&that)
+        :type(that.type), data(that.data)
+    {
+        if(type)
+        {
+            assert(data);
+            that.type = nullptr;
+            that.data = nullptr;
+        }
     }
 
     template<class Type>
     BaseVariant<Type>::~BaseVariant()
     {
-        assert(type);
-        assert(data);
-        type->destruct(data);
+        if(type)
+        {
+            assert(data);
+            type->destruct(data);
+        }
+        else
+        {
+            assert(!data);
+        }
     }
 
     template<class Type>
     BaseVariant<Type> &BaseVariant<Type>::operator=(const BaseVariant &that)
     {
-        assert(type);
-        type->destruct(data);
-        assert(that.type);
-        assert(that.data);
-        type = that.type;
-        data = type->clone(that.data);
+        if(type)
+        {
+            assert(data);
+            type->destruct(data);
+            type = nullptr;
+            data = nullptr;
+        }
+        if(that.type)
+        {
+            assert(that.data);
+            type = that.type;
+            data = type->clone(that.data);
+        }
+        return *this;
+    }
+
+    template<class Type>
+    BaseVariant<Type> &BaseVariant<Type>::operator=(BaseVariant &&that)
+    {
+        if(type)
+        {
+            assert(data);
+            type->destruct(data);
+            type = nullptr;
+            data = nullptr;
+        }
+        if(that.type)
+        {
+            assert(that.data);
+            type = that.type;
+            data = that.data;
+            that.type = nullptr;
+            that.data = nullptr;
+        }
         return *this;
     }
 
@@ -145,17 +195,14 @@ namespace variant
     template<typename T>
     bool BaseVariant<Type>::isType() const
     {
-        assert(type);
-        return Type::template type<T>() == *type;
+        return type && Type::template type<T>() == *type;
     }
 
     template<class Type>
     inline bool equalType(const BaseVariant<Type> &left,
         const BaseVariant<Type> &right)
     {
-        assert(left.type);
-        assert(right.type);
-        return *left.type == *right.type;
+        return left.type && right.type && *left.type == *right.type;
     }
 }
 

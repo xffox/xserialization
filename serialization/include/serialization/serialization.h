@@ -74,10 +74,10 @@ namespace serialization
     std::unique_ptr<ISerializer> beginCollection(T &value);
 }
 
-void operator<<(serialization::ISerializer &serializer,
-    const serialization::MetaObject &object);
-void operator>>(const serialization::ISerializer &deserializer,
-    serialization::MetaObject &object);
+template<typename T>
+void operator<<(serialization::ISerializer &serializer, const T &object);
+template<typename T>
+void operator>>(const serialization::ISerializer &deserializer, T &object);
 
 #include "serialization/factory.h"
 
@@ -98,6 +98,24 @@ namespace serialization
     {
         return factory::createSerializer(value);
     }
+}
+
+template<typename T>
+void operator<<(serialization::ISerializer &serializer,
+    const T &object)
+{
+    write(serializer, object, serialization::Context());
+}
+
+template<typename T>
+void operator>>(const serialization::ISerializer &deserializer, T &object)
+{
+    std::unique_ptr<serialization::ISerializer> s(
+        serialization::factory::createSerializer(object));
+    if(!s.get())
+        throw serialization::exception::SerializationException(
+            serialization::Context());
+    deserializer.visit(*s, serialization::Context());
 }
 
 #endif

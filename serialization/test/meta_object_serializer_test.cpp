@@ -2,9 +2,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <string>
 
-#include "serialization/MetaObject.h"
-#include "serialization/MetaObjectSerializer.h"
-#include "serialization/serialization.h"
+#include "serialization/serialization.hpp"
 
 #define VALUE(cl, type) \
     SERIALIZABLE_CLASS(cl) \
@@ -269,8 +267,7 @@ namespace serialization
                 const T v(value);
                 const T expected(v);
                 T actual;
-                MetaObjectSerializer serializer(actual);
-                serializer<<v;
+                actual<<v;
                 return expected == actual;
             }
 
@@ -280,8 +277,7 @@ namespace serialization
                 T v(value);
                 const T expected(v);
                 T actual;
-                MetaObjectSerializer serializer(static_cast<T&>(v));
-                serializer>>actual;
+                v>>actual;
                 return expected == actual;
             }
         };

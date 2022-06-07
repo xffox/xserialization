@@ -1,9 +1,10 @@
-#ifndef SERIALIZATION_CONTEXT_H
-#define SERIALIZATION_CONTEXT_H
+#ifndef SERIALIZATION_CONTEXT_HPP
+#define SERIALIZATION_CONTEXT_HPP
 
 #include <cstddef>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 
 namespace serialization
 {
@@ -50,8 +51,20 @@ namespace serialization
             throw std::logic_error("not a name context type");
         }
 
+        friend bool operator==(const Context &left, const Context &right)
+        {
+            // assuming unused field is always empty
+            return std::tie(left.type, left.index, left.name) ==
+                std::tie(right.type, right.index, right.name);
+        }
+        friend bool operator!=(const Context &left, const Context &right)
+        {
+            return !(left == right);
+        }
+
     private:
         Type type;
+        // TODO: variant
         std::size_t index;
         std::string name;
     };

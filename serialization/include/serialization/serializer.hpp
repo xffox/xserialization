@@ -1,29 +1,25 @@
-#ifndef SERIALIZATION_ISERIALIZER_H
-#define SERIALIZATION_ISERIALIZER_H
+#ifndef SERIALIZATION_SERIALIZER_HPP
+#define SERIALIZATION_SERIALIZER_HPP
 
-#include <memory>
 #include <string>
 
-#include "serialization/Context.h"
+#include "serialization/context.hpp"
+#include "serialization/null.hpp"
 
 namespace serialization
 {
+    class IDeserializer;
+
     class ISerializer
     {
     public:
-        virtual ~ISerializer(){}
-
-        virtual std::unique_ptr<ISerializer> beginCollection(Context::Type type,
-            const Context &context) = 0;
-        
-        virtual void visit(ISerializer &serializer,
-            const serialization::Context &context) const = 0;
+        virtual ~ISerializer() = default;
 
         virtual Context::Type contextType() const = 0;
 
-        // TODO: add value container type, prevent interface grow
-//      virtual void writeNull(const Context &context) = 0;
-
+        // TODO: not sure, maybe sized values are better: std::int32_t, etc.
+        virtual void write(const IDeserializer &value, const Context &context) = 0;
+        virtual void write(Null, const Context &context) = 0;
         virtual void write(bool value, const Context &context) = 0;
         virtual void write(char value, const Context &context) = 0;
         virtual void write(signed char value, const Context &context) = 0;
@@ -39,7 +35,6 @@ namespace serialization
         virtual void write(float value, const Context &context) = 0;
         virtual void write(double value, const Context &context) = 0;
         virtual void write(long double value, const Context &context) = 0;
-        // TODO: really had to separate the string type
         virtual void write(const std::string &value, const Context &context) = 0;
     };
 }

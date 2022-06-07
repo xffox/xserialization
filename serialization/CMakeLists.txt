@@ -8,11 +8,7 @@ set(SERIALIZATION_INCLUDES ${SERIALIZATION_INCLUDES} PARENT_SCOPE)
 set(SERIALIZATION_LIBS ${SERIALIZATION_NAME})
 set(SERIALIZATION_LIBS ${SERIALIZATION_LIBS} PARENT_SCOPE)
 
-set(SERIALIZATION_SRCS
-    "src/serialization.cpp"
-    "src/factory.cpp"
-    "src/MetaObjectSerializer.cpp"
-    )
+file(GLOB SERIALIZATION_SRCS "src/*.cpp"  "src/*/*.cpp")
 
 include_directories(${SERIALIZATION_INCLUDES})
 

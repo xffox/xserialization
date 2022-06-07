@@ -1,16 +1,14 @@
-#ifndef SERIALIZATION_EXCEPTION_SERIALIZATIONEXCEPTION_H
-#define SERIALIZATION_EXCEPTION_SERIALIZATIONEXCEPTION_H
+#ifndef SERIALIZATION_EXCEPTION_SERIALIZATIONEXCEPTION_HPP
+#define SERIALIZATION_EXCEPTION_SERIALIZATIONEXCEPTION_HPP
 
 #include <exception>
 
-#include "serialization/Context.h"
+#include "serialization/context.hpp"
 
-namespace serialization
+namespace serialization::exception
 {
-    namespace exception
+    class SerializationException: public std::exception
     {
-        class SerializationException: public std::exception
-        {
         public:
             SerializationException(const Context &context)
                 :context(context)
@@ -31,8 +29,7 @@ namespace serialization
 
         private:
             Context context;
-        };
-    }
+    };
 }
 
 #endif

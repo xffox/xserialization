@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/test")
 
@@ -7,10 +7,7 @@ pkg_search_module(CPPUNIT cppunit)
 if(CPPUNIT_FOUND)
     set(SERIALIZATION_TEST_NAME serialization_test)
 
-    set(SERIALIZATION_TEST_SRCS
-        "test.cpp"
-        "MetaObjectSerializerTest.cpp"
-        )
+    file(GLOB SERIALIZATION_TEST_SRCS "*.cpp")
 
     add_executable(${SERIALIZATION_TEST_NAME} ${SERIALIZATION_TEST_SRCS})
     target_link_libraries(${SERIALIZATION_TEST_NAME} ${SERIALIZATION_LIBS}

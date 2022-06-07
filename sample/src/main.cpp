@@ -3,12 +3,10 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <vector>
+#include <type_traits>
 
-#include "serialization/MetaObject.h"
-#include "serialization/serialization.h"
-#include "serialization/ISerializer.h"
-#include "serialization/exception/SerializationException.h"
-#include "variant/Variant.h"
+#include "serialization/serialization.hpp"
 
 namespace
 {
@@ -91,8 +89,7 @@ namespace
         StringSerializer(std::ostream &ostream)
             :first(true), type(serialization::Context::TYPE_NONE),
             ostream(ostream)
-        {
-        }
+        {}
 
         StringSerializer(std::ostream &ostream, serialization::Context::Type type,
             const serialization::Context &context)
@@ -106,7 +103,7 @@ namespace
                 ostream<<'[';
         }
 
-        virtual ~StringSerializer()
+        ~StringSerializer()
         {
             if(type == serialization::Context::TYPE_NAME)
                 ostream<<'}';
@@ -114,90 +111,87 @@ namespace
                 ostream<<']';
         }
 
-        virtual std::unique_ptr<serialization::ISerializer> beginCollection(
-            serialization::Context::Type type,
-            const serialization::Context &context)
-        {
-            writeSeparator();
-            return std::auto_ptr<serialization::ISerializer>(
-                new StringSerializer(ostream, type, context));
-        }
-
-        virtual serialization::Context::Type contextType() const
+        serialization::Context::Type contextType() const override
         {
             return type;
         }
 
-        virtual void write(bool value, const serialization::Context &context)
+        void write(const serialization::IDeserializer &value,
+                const serialization::Context &context) override
         {
-            writeValue(value, context);
-        }
-        virtual void write(char value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(signed char value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(unsigned char value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(short value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(unsigned short value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(int value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(unsigned int value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(long value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(unsigned long value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(long long value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(unsigned long long value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(float value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(double value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(long double value, const serialization::Context &context)
-        {
-            writeValue(value, context);
-        }
-        virtual void write(const std::string &value,
-            const serialization::Context &context)
-        {
-            writeValue(value, context);
+            writeSeparator();
+            StringSerializer serializer(ostream, value.contextType(), context);
+            value.visit(serializer);
         }
 
-        virtual void visit(ISerializer&,
-            const serialization::Context&) const
+        void write(serialization::Null, const serialization::Context &context) override
         {
-            throw serialization::exception::SerializationException(serialization::Context(""));
+            write("<null>", context);
+        }
+        void write(bool value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(char value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(signed char value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(unsigned char value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(short value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(unsigned short value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(int value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(unsigned int value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(long value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(unsigned long value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(long long value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(unsigned long long value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(float value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(double value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(long double value, const serialization::Context &context) override
+        {
+            writeValue(value, context);
+        }
+        void write(const std::string &value,
+            const serialization::Context &context) override
+        {
+            writeValue(value, context);
         }
 
     private:
@@ -246,7 +240,108 @@ namespace
             res.push_back(current++);
         return res;
     }
+
+    struct Data
+    {
+        std::string str;
+        int num;
+    };
+
+    SERIALIZABLE_CLASS(CustomClass)
+    {
+    public:
+        CustomClass(Data data)
+            :data(data)
+        {}
+
+        SERIALIZABLE_FIELD(Data, data);
+    };
+
+    class DataDeserializer: public serialization::IDeserializer
+    {
+    public:
+        explicit DataDeserializer(const Data &data)
+            :data(data)
+        {}
+
+        serialization::Context::Type contextType() const override
+        {
+            return serialization::Context::TYPE_NAME;
+        }
+
+        void visit(serialization::ISerializer &serializer) const override
+        {
+            serializer.write(data.str, "str");
+            serializer.write(data.num, "num");
+        }
+    private:
+        const Data &data;
+    };
+
+    class DataSerializer: public serialization::BaseSerializer
+    {
+    public:
+        explicit DataSerializer(Data &data)
+            :data(data)
+        {}
+
+        serialization::Context::Type contextType() const override
+        {
+            return serialization::Context::TYPE_NAME;
+        }
+
+        void write(const serialization::IDeserializer &value,
+                const serialization::Context &context) override
+        {
+            if(context.getType() != serialization::Context::TYPE_NONE)
+            {
+                throw serialization::exception::SerializationException(context);
+            }
+            value.visit(*this);
+        }
+        void write(const std::string &value, const serialization::Context &context) override
+        {
+            if(context != serialization::Context("str"))
+            {
+                throw serialization::exception::SerializationException(context);
+            }
+            data.str = value;
+        }
+        void write(int value, const serialization::Context &context) override
+        {
+            if(context != serialization::Context("num"))
+            {
+                throw serialization::exception::SerializationException(context);
+            }
+            data.num = value;
+        }
+
+    private:
+        Data &data;
+    };
 }
+
+template<>
+struct serialization::DeserializationTrait<Data>
+{
+    using Deserializer = DataDeserializer;
+
+    static Deserializer toDeserializer(const Data &data)
+    {
+        return DataDeserializer(data);
+    }
+};
+
+template<>
+struct serialization::SerializationTrait<Data>
+{
+    using Serializer = DataSerializer;
+
+    static Serializer toSerializer(Data &data)
+    {
+        return DataSerializer(data);
+    }
+};
 
 int main()
 {
@@ -262,6 +357,8 @@ int main()
     ostream<<std::endl;
     PointVector pv(generate<PointVector::ValueType>(Point(), 10));
     print(ostream, pv);
+    ostream<<std::endl;
+    print(ostream, CustomClass{Data{"foobar", 42}});
     std::cout<<ostream.str()<<std::endl;
     return 0;
 }

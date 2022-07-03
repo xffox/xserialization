@@ -9,5 +9,5 @@ namespace serialization::inner
         return Context::TYPE_NAME;
     }
 
-    MetaObject::IField::~IField() = default;
+    IField::~IField() = default;
 }

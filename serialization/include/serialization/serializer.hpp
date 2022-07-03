@@ -39,4 +39,6 @@ namespace serialization
     };
 }
 
+#include "serialization/deserializer.hpp"
+
 #endif

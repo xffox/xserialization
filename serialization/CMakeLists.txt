@@ -10,8 +10,7 @@ set(SERIALIZATION_LIBS ${SERIALIZATION_LIBS} PARENT_SCOPE)
 
 file(GLOB SERIALIZATION_SRCS "src/*.cpp"  "src/*/*.cpp")
 
-include_directories(${SERIALIZATION_INCLUDES})
-
 add_library(${SERIALIZATION_NAME} ${SERIALIZATION_SRCS})
+target_include_directories(${SERIALIZATION_NAME} PUBLIC ${SERIALIZATION_INCLUDES})
 
 add_subdirectory("test")

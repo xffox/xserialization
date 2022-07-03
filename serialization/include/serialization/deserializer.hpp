@@ -18,7 +18,6 @@ namespace serialization
     };
 }
 
-// TODO: add this?
-//#include "serialization/ISerializer.h"
+#include "serialization/serializer.hpp"
 
 #endif

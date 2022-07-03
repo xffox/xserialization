@@ -6,15 +6,20 @@
 #include <type_traits>
 #include <unordered_map>
 #include <tuple>
+#include <limits>
 #include <memory>
 
 #include "serialization/serializer.hpp"
 #include "serialization/deserializer.hpp"
 #include "serialization/context.hpp"
-#include "serialization/exception/serialization_exception.hpp"
+#include "serialization/typeutil.hpp"
+#include "serialization/exception/serializer_exception.hpp"
+#include "serialization/exception/deserializer_exception.hpp"
 
 namespace serialization::inner
 {
+    class IField;
+
     class MetaObject: public ISerializer, public IDeserializer
     {
     public:
@@ -23,85 +28,150 @@ namespace serialization::inner
         Context::Type contextType() const override;
 
     protected:
-        class IField
-        {
-        public:
-            virtual ~IField() = 0;
-
-            virtual void visit(ISerializer &serializer, const MetaObject &object) = 0;
-
-            virtual void write(MetaObject&, const IDeserializer&)
-            {
-                // TODO: proper context
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, bool)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, char)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, signed char)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, unsigned char)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, short)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, unsigned short)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, int)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, unsigned int)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, long)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, unsigned long)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, long long)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, unsigned long long)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, float)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, double)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, long double)
-            {
-                throw exception::SerializationException(Context());
-            }
-            virtual void write(MetaObject&, const std::string&)
-            {
-                throw exception::SerializationException(Context());
-            }
-        };
         typedef std::unordered_map<std::string, IField*> FieldMap;
     };
+
+    class IField
+    {
+    public:
+        virtual ~IField() = 0;
+
+        virtual void visit(ISerializer &serializer, const MetaObject &object) = 0;
+
+        virtual bool write(MetaObject&, const IDeserializer&)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, bool)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, char)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, signed char)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, unsigned char)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, short)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, unsigned short)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, int)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, unsigned int)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, long)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, unsigned long)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, long long)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, unsigned long long)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, float)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, double)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, long double)
+        {
+            return false;
+        }
+        virtual bool write(MetaObject&, const std::string&)
+        {
+            return false;
+        }
+    };
+
+    namespace inner
+    {
+        template<typename T>
+        inline constexpr bool IsWeakConvertible =
+            (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>);
+    }
+
+    template<typename Target, typename Cand, typename = void>
+    class BaseConvertedField: public virtual IField
+    {};
+
+    template<typename Target, typename Cand>
+    class BaseConvertedField<Target, Cand,
+          std::enable_if_t<
+              !std::is_same_v<Target, Cand> &&
+              inner::IsWeakConvertible<Target> && inner::IsWeakConvertible<Cand> &&
+              std::is_convertible_v<Cand, Target>>>: public virtual IField
+    {
+    public:
+        bool write(MetaObject &object, Cand value) override
+        {
+            bool valid = true;
+            if constexpr(std::is_signed_v<Target> == std::is_signed_v<Cand>)
+            {
+                valid = (value >= std::numeric_limits<Target>::lowest() &&
+                        value <= std::numeric_limits<Target>::max());
+            }
+            else if constexpr(std::is_unsigned_v<Target>)
+            {
+                valid = (value >= 0 &&
+                        static_cast<std::make_unsigned_t<Cand>>(value) <=
+                        std::numeric_limits<Target>::max());
+            }
+            else
+            {
+                valid = (value <= static_cast<std::make_unsigned_t<Target>>(
+                            std::numeric_limits<Target>::max()));
+            }
+            if(!valid)
+            {
+                return false;
+            }
+            return static_cast<IField&>(*this).write(object, static_cast<Target>(value));
+        }
+    };
+
+    template<typename Target, typename... Cands>
+    class TargetConvertedField: public BaseConvertedField<Target, Cands>...
+    {
+    public:
+        using IField::write;
+    };
+
+    template<typename Target>
+    struct PartialTargetConvertedField
+    {
+        template<typename... Cands>
+        using Type = TargetConvertedField<Target, Cands...>;
+    };
+
+    template<typename Target>
+    using WeakField =
+        typename typeutil::SerializationTrivialTypes<
+            PartialTargetConvertedField<Target>::template Type>::Type;
 
     template<class T>
     class MetaObjectBase: public MetaObject
@@ -114,7 +184,7 @@ namespace serialization::inner
         void write(const IDeserializer &value, const Context &context) override
         { return writeValue(context, value); }
         void write(Null, const Context &context) override
-        { throw exception::SerializationException(context); }
+        { throw exception::SerializerException(context, "invalid null write"); }
         void write(bool value, const Context &context) override
         { return writeValue(context, value); }
         void write(char value, const Context &context) override
@@ -176,8 +246,7 @@ namespace serialization::inner
     {
         if(serializer.contextType() != Context::TYPE_NAME)
         {
-            // TODO: proper exception
-            throw exception::SerializationException(Context());
+            throw exception::DeserializerException("invalid context type");
         }
         for(typename FieldMap::const_iterator iter = getFields().begin(),
             endIter = getFields().end(); iter != endIter; ++iter)
@@ -200,26 +269,30 @@ namespace serialization::inner
                 }
                 else
                 {
-                    throw exception::SerializationException(context);
+                    throw exception::SerializerException(context,
+                            "invalid value");
                 }
             }
             else
             {
-                throw exception::SerializationException(context);
+                throw exception::SerializerException(context, "invalid value");
             }
             return;
         }
         if(context.getType() != Context::TYPE_NAME)
         {
-            throw exception::SerializationException(context);
+            throw exception::SerializerException(context, "invalid context type");
         }
         FieldMap::iterator iter = getFields().find(context.getName());
         if(iter != getFields().end())
         {
-            iter->second->write(*this, value);
+            if(!iter->second->write(*this, value))
+            {
+                throw exception::SerializerException(context, "invalid field write");
+            }
             return;
         }
-        throw exception::SerializationException(context);
+        throw exception::SerializerException(context, "field not found");
     }
 }
 

@@ -13,7 +13,8 @@ struct serialization::SerializationTrait<T,
 {
     using Serializer = serialization::inner::MetaObject&;
 
-    static Serializer toSerializer(T &value) {
+    static Serializer toSerializer(T &value)
+    {
         return value;
     }
 };
@@ -24,7 +25,8 @@ struct serialization::DeserializationTrait<T,
 {
     using Deserializer = const serialization::inner::MetaObject&;
 
-    static Deserializer toDeserializer(const T &value) {
+    static Deserializer toDeserializer(const T &value)
+    {
         return value;
     }
 };
@@ -36,7 +38,8 @@ struct serialization::SerializationTrait<std::vector<T>>
 {
     using Serializer = serialization::inner::CollectionSerializer<std::vector<T>>;
 
-    static Serializer toSerializer(std::vector<T> &value) {
+    static Serializer toSerializer(std::vector<T> &value)
+    {
         return Serializer(value);
     }
 };
@@ -46,7 +49,8 @@ struct serialization::DeserializationTrait<std::vector<T>>
 {
     using Deserializer = serialization::inner::CollectionDeserializer<std::vector<T>>;
 
-    static Deserializer toDeserializer(const std::vector<T> &value) {
+    static Deserializer toDeserializer(const std::vector<T> &value)
+    {
         return Deserializer(value);
     }
 };

@@ -12,5 +12,7 @@
 #include "serialization/null.hpp"
 
 #include "serialization/exception/serialization_exception.hpp"
+#include "serialization/exception/serializer_exception.hpp"
+#include "serialization/exception/deserializer_exception.hpp"
 
 #endif

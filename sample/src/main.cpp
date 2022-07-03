@@ -212,7 +212,7 @@ namespace
             else if(context.getType() == serialization::Context::TYPE_INDEX)
                 ostream<<value;
             else
-                throw serialization::exception::SerializationException(
+                throw serialization::exception::SerializerException(
                     context);
         }
 
@@ -295,7 +295,7 @@ namespace
         {
             if(context.getType() != serialization::Context::TYPE_NONE)
             {
-                throw serialization::exception::SerializationException(context);
+                throw serialization::exception::SerializerException(context);
             }
             value.visit(*this);
         }
@@ -303,7 +303,7 @@ namespace
         {
             if(context != serialization::Context("str"))
             {
-                throw serialization::exception::SerializationException(context);
+                throw serialization::exception::SerializerException(context);
             }
             data.str = value;
         }
@@ -311,7 +311,7 @@ namespace
         {
             if(context != serialization::Context("num"))
             {
-                throw serialization::exception::SerializationException(context);
+                throw serialization::exception::SerializerException(context);
             }
             data.num = value;
         }

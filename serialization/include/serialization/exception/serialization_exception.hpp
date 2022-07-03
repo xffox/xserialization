@@ -2,6 +2,8 @@
 #define SERIALIZATION_EXCEPTION_SERIALIZATIONEXCEPTION_HPP
 
 #include <exception>
+#include <type_traits>
+#include <utility>
 
 #include "serialization/context.hpp"
 
@@ -10,25 +12,31 @@ namespace serialization::exception
     class SerializationException: public std::exception
     {
         public:
-            SerializationException(const Context &context)
-                :context(context)
+            SerializationException()
+                :msg_{}
             {}
 
-            virtual ~SerializationException() throw()
+            template<typename T, typename =
+                std::enable_if_t<std::is_constructible_v<std::string, T>>>
+            explicit SerializationException(T &&msg)
+                :msg_(std::forward<T>(msg))
             {}
 
-            virtual const char *what() const throw()
+            ~SerializationException() throw() override
+            {}
+
+            const char *what() const throw() override
             {
                 return "serialization exception";
             }
 
-            const Context &getContext() const
+            const std::string &msg() const
             {
-                return context;
+                return msg_;
             }
 
         private:
-            Context context;
+            std::string msg_;
     };
 }
 

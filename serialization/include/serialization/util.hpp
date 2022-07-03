@@ -11,15 +11,15 @@
 namespace serialization::util
 {
     template<typename R, typename T>
-    void writeValue(R &dst, const T &src,
+    bool writeValue(R &dst, const T &src,
             std::enable_if_t<typeutil::IsSerializationTrivial<R>::value &&
                 typeutil::IsSerializationTrivial<T>::value, int> = 0);
     template<typename R, typename T>
-    void writeValue(R&, const T&,
+    bool writeValue(R&, const T&,
             std::enable_if_t<typeutil::IsSerializationTrivial<R>::value &&
                 !typeutil::IsSerializationTrivial<T>::value, int> = 0);
     template<typename R, typename T>
-    void writeValue(R &dst, const T &src,
+    bool writeValue(R &dst, const T &src,
             std::enable_if_t<!typeutil::IsSerializationTrivial<R>::value, int> = 0);
 
     template<typename R>
@@ -39,25 +39,27 @@ namespace serialization::util
 namespace serialization::util
 {
     template<typename R, typename T>
-    void writeValue(R &dst, const T &src,
+    bool writeValue(R &dst, const T &src,
             std::enable_if_t<typeutil::IsSerializationTrivial<R>::value &&
                 typeutil::IsSerializationTrivial<T>::value, int>)
     {
         dst = src;
+        return true;
     }
     template<typename R, typename T>
-    void writeValue(R&, const T&,
+    bool writeValue(R&, const T&,
             std::enable_if_t<typeutil::IsSerializationTrivial<R>::value &&
                 !typeutil::IsSerializationTrivial<T>::value, int>)
     {
-        throw exception::SerializationException(Context());
+        return false;
     }
     template<typename R, typename T>
-    void writeValue(R &dst, const T &src,
+    bool writeValue(R &dst, const T &src,
             std::enable_if_t<!typeutil::IsSerializationTrivial<R>::value, int>)
     {
         SerializationTrait<R>::toSerializer(dst).write(src,
                 serialization::Context());
+        return true;
     }
 
     template<typename R>

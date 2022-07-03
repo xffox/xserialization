@@ -1,6 +1,7 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <string>
+#include <limits>
 
 #include "serialization/serialization.hpp"
 
@@ -146,6 +147,55 @@ namespace serialization
             }
         }
 
+        namespace
+        {
+            SERIALIZABLE_CLASS(SignedCharWeakClass)
+            {
+            public:
+                SignedCharWeakClass(signed char value)
+                    :value(value)
+                {}
+
+                SERIALIZABLE_WEAK_FIELD(signed char, value);
+            };
+            bool operator==(const SignedCharWeakClass &left, const SignedCharWeakClass &right)
+            {
+                return left.value == right.value;
+            }
+            SERIALIZABLE_CLASS(IntWeakClass)
+            {
+            public:
+                IntWeakClass(int value)
+                    :value(value)
+                {}
+
+                SERIALIZABLE_WEAK_FIELD(int, value);
+            };
+            bool operator==(const IntWeakClass &left, const IntWeakClass &right)
+            {
+                return left.value == right.value;
+            }
+
+            SERIALIZABLE_CLASS(SignedCharStrongClass)
+            {
+            public:
+                SignedCharStrongClass(signed char value)
+                    :value(value)
+                {}
+
+                SERIALIZABLE_FIELD(signed char, value);
+            };
+            SERIALIZABLE_CLASS(IntStrongClass)
+            {
+            public:
+                IntStrongClass(int value)
+                    :value(value)
+                {}
+
+                SERIALIZABLE_FIELD(int, value);
+            };
+        }
+
         class MetaObjectSerializerTest: public CppUnit::TestCase
         {
             CPPUNIT_TEST_SUITE(MetaObjectSerializerTest);
@@ -158,6 +208,12 @@ namespace serialization
             CPPUNIT_TEST(testSerializeCollectionComplex);
             CPPUNIT_TEST(testDeserializeCollectionComplex);
             CPPUNIT_TEST(testClassName);
+            CPPUNIT_TEST(testWeakFieldsShortToInt);
+            CPPUNIT_TEST(testWeakFieldsIntToShort);
+            CPPUNIT_TEST_EXCEPTION(testStrongFields,
+                    serialization::exception::SerializationException);
+            CPPUNIT_TEST_EXCEPTION(testWeakFieldsOverflow,
+                    serialization::exception::SerializationException);
             CPPUNIT_TEST_SUITE_END();
         public:
             void testSerializePlain()
@@ -258,6 +314,44 @@ namespace serialization
                     std::string(Line::getClassName()));
                 CPPUNIT_ASSERT_EQUAL(std::string("Vector"),
                     std::string(Vector::getClassName()));
+            }
+
+            void testWeakFieldsShortToInt()
+            {
+                SignedCharWeakClass charValue{42};
+                IntWeakClass intValue{0};
+                charValue>>intValue;
+                CPPUNIT_ASSERT(IntWeakClass{42} == intValue);
+            }
+
+            void testWeakFieldsIntToShort()
+            {
+                IntWeakClass intValue{42};
+                SignedCharWeakClass charValue{0};
+                intValue>>charValue;
+                CPPUNIT_ASSERT(SignedCharWeakClass{42} == charValue);
+            }
+
+            void testStrongFields()
+            {
+                SignedCharStrongClass charValue{42};
+                IntStrongClass intValue{0};
+                charValue>>intValue;
+            }
+
+            void testWeakFieldsOverflow()
+            {
+                if constexpr(std::numeric_limits<signed char>::max() < std::numeric_limits<int>::max())
+                {
+                    IntWeakClass intValue{std::numeric_limits<int>::max()};
+                    SignedCharWeakClass charValue{0};
+                    intValue>>charValue;
+                }
+                else
+                {
+                    // not possible to test on this platform
+                    throw exception::SerializerException(Context());
+                }
             }
 
         private:

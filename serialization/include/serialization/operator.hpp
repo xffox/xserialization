@@ -2,11 +2,25 @@
 #define SERIALIZATION_OPERATOR_HPP
 
 #include <tuple>
-#include <type_traits>
 
 #include "serialization/context.hpp"
 #include "serialization/serializer.hpp"
 #include "serialization/deserializer.hpp"
+
+namespace serialization
+{
+    template<typename T, typename Context>
+    void operator<<(serialization::ISerializer &serializer,
+        const std::tuple<T, Context> &contextedObject);
+    template<typename T>
+    void operator<<(serialization::ISerializer &serializer,
+        const T &object);
+    template<typename T>
+    void operator>>(const serialization::IDeserializer &deserializer, T &object);
+}
+
+#include <type_traits>
+
 #include "serialization/serialization_trait.hpp"
 
 namespace serialization

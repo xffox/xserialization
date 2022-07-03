@@ -8,7 +8,8 @@
 #include "serialization/context.hpp"
 #include "serialization/base_serializer.hpp"
 #include "serialization/typeutil.hpp"
-#include "serialization/exception/serialization_exception.hpp"
+#include "serialization/exception/serializer_exception.hpp"
+#include "serialization/exception/deserializer_exception.hpp"
 
 namespace serialization::inner
 {
@@ -39,7 +40,7 @@ namespace serialization::inner
             if(type != Context::TYPE_INDEX)
             {
                 // TODO: better exception
-                throw exception::SerializationException(Context());
+                throw exception::SerializerException(Context());
             }
         }
 
@@ -91,18 +92,21 @@ namespace serialization::inner
             }
             else
             {
-                throw exception::SerializationException(context);
+                throw exception::SerializerException(context, "invalid value");
             }
         }
         else if(context.getType() == Context::TYPE_INDEX)
         {
             if(context.getIndex() >= collection.size())
                 collection.resize(context.getIndex() + 1); // TODO: optimize
-            util::writeValue(collection[context.getIndex()], value);
+            if(!util::writeValue(collection[context.getIndex()], value))
+            {
+                throw exception::SerializerException(context, "invalid value");
+            }
         }
         else
         {
-            throw exception::SerializationException(context);
+            throw exception::SerializerException(context, "invalid context type");
         }
     }
 
@@ -124,7 +128,7 @@ namespace serialization::inner
         }
         else
         {
-            throw exception::SerializationException(Context());
+            throw exception::DeserializerException("invalid value context type");
         }
     }
 }

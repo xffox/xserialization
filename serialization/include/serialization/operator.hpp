@@ -10,43 +10,56 @@
 namespace serialization
 {
     template<typename T, typename Context>
-    void operator<<(serialization::ISerializer &serializer,
+    void operator<<(ISerializer &serializer,
         const std::tuple<T, Context> &contextedObject);
     template<typename T>
-    void operator<<(serialization::ISerializer &serializer,
-        const T &object);
+    void operator<<(ISerializer &serializer, const T &object);
     template<typename T>
-    void operator>>(const serialization::IDeserializer &deserializer, T &object);
+    void operator>>(const IDeserializer &deserializer, T &object);
+
+    template<typename T>
+    decltype(auto) toSerializer(T &&value);
+    template<typename T>
+    decltype(auto) toDeserializer(T &&value);
 }
 
 #include <type_traits>
+#include <utility>
 
 #include "serialization/serialization_trait.hpp"
 
 namespace serialization
 {
+    template<typename T>
+    decltype(auto) toSerializer(T &&value)
+    {
+        return SerializationTrait<std::decay_t<T>>::toSerializer(std::forward<T>(value));
+    }
+
+    template<typename T>
+    decltype(auto) toDeserializer(T &&value)
+    {
+        return DeserializationTrait<std::decay_t<T>>::toDeserializer(std::forward<T>(value));
+    }
+
     template<typename T, typename Context>
-    void operator<<(serialization::ISerializer &serializer,
+    void operator<<(ISerializer &serializer,
         const std::tuple<T, Context> &contextedObject)
     {
         const auto &[object, context] = contextedObject;
-        serializer.write(
-                serialization::DeserializationTrait<std::decay_t<T>>::toDeserializer(object),
-                context);
+        serializer.write(toDeserializer(object), context);
     }
 
     template<typename T>
-    void operator<<(serialization::ISerializer &serializer,
-        const T &object)
+    void operator<<(ISerializer &serializer, const T &object)
     {
-        serializer<<std::forward_as_tuple(object, serialization::Context());
+        serializer<<std::forward_as_tuple(object, Context());
     }
 
     template<typename T>
-    void operator>>(const serialization::IDeserializer &deserializer, T &object)
+    void operator>>(const IDeserializer &deserializer, T &object)
     {
-        serialization::SerializationTrait<T>::toSerializer(object).write(deserializer,
-                serialization::Context());
+        toSerializer(object).write(deserializer, Context());
     }
 }
 

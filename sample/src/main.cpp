@@ -234,7 +234,7 @@ namespace
     T generate(const typename T::value_type &first,
         const std::size_t count)
     {
-        T res;
+        T res{};
         typename T::value_type current(first);
         for(std::size_t i = 0; i < count; ++i)
             res.push_back(current++);

@@ -20,15 +20,17 @@ namespace serialization::inner
 {
     class IField;
 
-    class MetaObject: public ISerializer, public IDeserializer
+    class MetaObject
     {
+    public:
+        using FieldMap = std::unordered_map<std::string, IField*>;
+
     public:
         virtual ~MetaObject() = 0;
 
-        Context::Type contextType() const override;
+        virtual const FieldMap &fields() const = 0;
 
-    protected:
-        typedef std::unordered_map<std::string, IField*> FieldMap;
+        virtual bool weakClass() const = 0;
     };
 
     class IField
@@ -173,50 +175,21 @@ namespace serialization::inner
         typename typeutil::SerializationTrivialTypes<
             PartialTargetConvertedField<Target>::template Type>::Type;
 
-    template<class T>
+    template<class T, bool weak>
     class MetaObjectBase: public MetaObject
     {
     public:
-        virtual ~MetaObjectBase() = 0;
+        ~MetaObjectBase() override = 0;
 
-        void visit(ISerializer &serializer) const override;
+        const FieldMap &fields() const override
+        {
+            return MetaObjectBase::getFields();
+        }
 
-        void write(const IDeserializer &value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(Null, const Context &context) override
-        { throw exception::SerializerException(context, "invalid null write"); }
-        void write(bool value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(char value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(signed char value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(unsigned char value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(short value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(unsigned short value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(int value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(unsigned int value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(long value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(unsigned long value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(long long value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(unsigned long long value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(float value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(double value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(long double value, const Context &context) override
-        { return writeValue(context, value); }
-        void write(const std::string &value, const Context &context) override
-        { return writeValue(context, value); }
+        bool weakClass() const override
+        {
+            return weak;
+        }
 
     protected:
         using BaseClass = T;
@@ -233,67 +206,10 @@ namespace serialization::inner
             // TODO: assert uniquety
             getFields().insert(std::pair<std::string, IField*>(name, &field));
         }
-
-        template<typename V>
-        void writeValue(const Context &context, const V &value);
     };
 
-    template<class T>
-    MetaObjectBase<T>::~MetaObjectBase() = default;
-
-    template<typename T>
-    void MetaObjectBase<T>::visit(ISerializer &serializer) const
-    {
-        if(serializer.contextType() != Context::TYPE_NAME)
-        {
-            throw exception::DeserializerException("invalid context type");
-        }
-        for(typename FieldMap::const_iterator iter = getFields().begin(),
-            endIter = getFields().end(); iter != endIter; ++iter)
-        {
-            iter->second->visit(serializer, *this);
-        }
-    }
-
-    template<typename T>
-    template<typename V>
-    void MetaObjectBase<T>::writeValue(const Context &context, const V &value)
-    {
-        if(context.getType() == Context::TYPE_NONE)
-        {
-            if constexpr(std::is_same_v<std::decay_t<V>, IDeserializer>)
-            {
-                if(value.contextType() == Context::TYPE_NAME)
-                {
-                    value.visit(*this);
-                }
-                else
-                {
-                    throw exception::SerializerException(context,
-                            "invalid value");
-                }
-            }
-            else
-            {
-                throw exception::SerializerException(context, "invalid value");
-            }
-            return;
-        }
-        if(context.getType() != Context::TYPE_NAME)
-        {
-            throw exception::SerializerException(context, "invalid context type");
-        }
-        FieldMap::iterator iter = getFields().find(context.getName());
-        if(iter != getFields().end())
-        {
-            if(!iter->second->write(*this, value))
-            {
-                throw exception::SerializerException(context, "invalid field write");
-            }
-            return;
-        }
-        throw exception::SerializerException(context, "field not found");
-    }
+    template<class T, bool weak>
+    MetaObjectBase<T, weak>::~MetaObjectBase() = default;
 }
 
 #endif

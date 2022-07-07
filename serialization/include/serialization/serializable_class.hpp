@@ -40,9 +40,8 @@
     }; \
     _FIELD_DEF(type, name)
 
-// TODO: probably add class name field
-#define SERIALIZABLE_CLASS(cl) \
-    class _##cl##ClassName \
+#define _SERIALIZABLE_CLASS(cl, weak) \
+    class _##cl##ClassAttr \
     { \
     public: \
         static const char *getClassName() \
@@ -50,7 +49,13 @@
             return #cl; \
         } \
     }; \
-    class cl: public serialization::inner::MetaObjectBase<cl>, public _##cl##ClassName
+    class cl: public serialization::inner::MetaObjectBase<cl, (weak)>, \
+              public _##cl##ClassAttr
+
+// TODO: probably add class name field
+#define SERIALIZABLE_CLASS(cl) _SERIALIZABLE_CLASS(cl, false)
+
+#define SERIALIZABLE_WEAK_CLASS(cl) _SERIALIZABLE_CLASS(cl, true)
 
 #define SERIALIZABLE_FIELD(type, name) \
     _SERIALIZABLE_FIELD(type, name, serialization::inner::IField)

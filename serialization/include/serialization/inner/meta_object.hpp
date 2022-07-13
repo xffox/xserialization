@@ -126,13 +126,16 @@ namespace serialization::inner
           std::enable_if_t<
               !std::is_same_v<Target, Cand> &&
               inner::IsWeakConvertible<Target> && inner::IsWeakConvertible<Cand> &&
-              std::is_convertible_v<Cand, Target>>>: public virtual IField
+              std::is_convertible_v<Cand, Target> &&
+              std::is_floating_point_v<Target> >= std::is_floating_point_v<Cand>>>:
+                  public virtual IField
     {
     public:
         bool write(MetaObject &object, Cand value) override
         {
             bool valid = true;
-            if constexpr(std::is_signed_v<Target> == std::is_signed_v<Cand>)
+            if constexpr(std::is_signed_v<Target> == std::is_signed_v<Cand> ||
+                    std::is_floating_point_v<Target>)
             {
                 valid = (value >= std::numeric_limits<Target>::lowest() &&
                         value <= std::numeric_limits<Target>::max());

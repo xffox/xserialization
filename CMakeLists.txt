@@ -18,5 +18,6 @@ elseif(WIN32)
 endif()
 
 add_subdirectory(serialization)
+add_subdirectory(json)
 add_subdirectory(variant)
 add_subdirectory(sample)

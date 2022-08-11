@@ -8,6 +8,7 @@
 #include <utility>
 
 #include <serialization/serialization.hpp>
+#include <serialization/json/json_serialization.hpp>
 
 namespace
 {
@@ -385,5 +386,11 @@ int main()
     ostream<<std::endl;
     print(ostream, CustomClass{Data{"foobar", 42}});
     std::cout<<ostream.str()<<std::endl;
+    {
+        serialization::json::JSON json;
+        auto serializer = serialization::toSerializer(json);
+        serializer<<pv;
+        std::cout<<std::string(json)<<std::endl;
+    }
     return 0;
 }

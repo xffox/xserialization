@@ -6,7 +6,5 @@ set(SAMPLE_SRCS
     "src/main.cpp"
     )
 
-include_directories(${SERIALIZATION_INCLUDES} ${VARIANT_INCLUDES})
-
 add_executable(${SAMPLE_NAME} ${SAMPLE_SRCS})
-target_link_libraries(${SAMPLE_NAME} ${SERIALIZATION_LIBS})
+target_link_libraries(${SAMPLE_NAME} ${SERIALIZATION} ${SERIALIZATION_JSON})

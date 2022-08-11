@@ -10,7 +10,7 @@ if(CPPUNIT_FOUND)
     file(GLOB SERIALIZATION_TEST_SRCS "*.cpp")
 
     add_executable(${SERIALIZATION_TEST_NAME} ${SERIALIZATION_TEST_SRCS})
-    target_link_libraries(${SERIALIZATION_TEST_NAME} ${SERIALIZATION_LIBS}
+    target_link_libraries(${SERIALIZATION_TEST_NAME} ${SERIALIZATION}
         ${CPPUNIT_LIBRARIES})
 
     add_test(NAME SerializationTest COMMAND ${SERIALIZATION_TEST_NAME})

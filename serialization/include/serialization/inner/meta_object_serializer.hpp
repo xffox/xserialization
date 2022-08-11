@@ -20,8 +20,6 @@ namespace serialization::inner
             :object(object), unusedFields(prepareUnusedFields(object))
         {}
 
-        bool allFieldsUsed() const;
-
         Context::Type contextType() const override;
 
         void write(const IDeserializer &value, const Context &context) override
@@ -60,10 +58,13 @@ namespace serialization::inner
         { return writeValue(context, value); }
         void write(const std::string &value, const Context &context) override
         { return writeValue(context, value); }
-        
+
     protected:
         template<typename V>
         void writeValue(const Context &context, const V &value);
+
+        bool allFieldsUsed() const;
+        bool isOpenObject() const;
 
     private:
         static std::unordered_set<std::string> prepareUnusedFields(
@@ -85,7 +86,7 @@ namespace serialization::inner
                 {
                     MetaObjectSerializer s(object);
                     value.visit(s);
-                    if(!object.weakClass() && !s.allFieldsUsed())
+                    if(!s.allFieldsUsed())
                     {
                         throw exception::SerializerException(context,
                                 "missing fields");
@@ -116,9 +117,14 @@ namespace serialization::inner
                 throw exception::SerializerException(context, "invalid field write");
             }
             unusedFields.erase(context.getName());
-            return;
         }
-        throw exception::SerializerException(context, "field not found");
+        else
+        {
+            if(!isOpenObject())
+            {
+                throw exception::SerializerException(context, "unknown field");
+            }
+        }
     }
 }
 

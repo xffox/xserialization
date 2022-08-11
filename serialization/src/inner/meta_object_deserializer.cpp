@@ -17,7 +17,7 @@ namespace serialization::inner
         {
             throw exception::DeserializerException("invalid context type");
         }
-        auto &fields = object.fields();
+        const auto &fields = object.fields();
         for(auto iter = std::begin(fields), endIter = std::end(fields);
                 iter != endIter; ++iter)
         {

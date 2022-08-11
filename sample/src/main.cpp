@@ -5,12 +5,13 @@
 #include <string>
 #include <vector>
 #include <type_traits>
+#include <utility>
 
-#include "serialization/serialization.hpp"
+#include <serialization/serialization.hpp>
 
 namespace
 {
-    SERIALIZABLE_CLASS(Point)
+    MT_CLASS(Point)
     {
     public:
         Point()
@@ -28,59 +29,59 @@ namespace
 
         Point operator++(int)
         {
-            const Point res(*this);
+            Point res(*this);
             this->operator++();
             return res;
         }
 
-        SERIALIZABLE_FIELD(int, x);
-        SERIALIZABLE_FIELD(int, y);
+        MT_FIELD(x, int, MT_FIELD_ATTR_WEAK);
+        MT_FIELD(y, int, MT_FIELD_ATTR_WEAK);
     };
 
-    SERIALIZABLE_CLASS(Line)
+    MT_CLASS(Line)
     {
     public:
         Line()
             :begin(), end()
         {}
-        Line(const Point &begin, const Point &end)
-            :begin(begin), end(end)
+        Line(Point begin, Point end)
+            :begin(std::move(begin)), end(std::move(end))
         {}
 
-        SERIALIZABLE_FIELD(Point, begin);
-        SERIALIZABLE_FIELD(Point, end);
+        MT_FIELD(begin, Point);
+        MT_FIELD(end, Point);
     };
 
-    SERIALIZABLE_CLASS(Vector)
+    MT_CLASS(Vector)
     {
     public:
-        typedef std::vector<int> ValueType;
+        using ValueType = std::vector<int>;
 
     public:
         Vector()
         :v()
         {}
-        Vector(const std::vector<int> &v)
-        :v(v)
+        Vector(std::vector<int> v)
+        :v(std::move(v))
         {}
 
-        SERIALIZABLE_FIELD(std::vector<int>, v);
+        MT_FIELD(v, std::vector<int>);
     };
 
-    SERIALIZABLE_CLASS(PointVector)
+    MT_CLASS(PointVector)
     {
     public:
-        typedef std::vector<Point> ValueType;
+        using ValueType = std::vector<Point>;
 
     public:
         PointVector()
         :v()
         {}
-        PointVector(const std::vector<Point> &v)
-        :v(v)
+        PointVector(std::vector<Point> v)
+        :v(std::move(v))
         {}
 
-        SERIALIZABLE_FIELD(std::vector<Point>, v);
+        MT_FIELD(v, std::vector<Point>);
     };
 
     class StringSerializer: public serialization::ISerializer
@@ -96,21 +97,32 @@ namespace
             :first(true), type(type), ostream(ostream)
         {
             if(context.getType() == serialization::Context::TYPE_NAME)
+            {
                 ostream<<context.getName()<<": ";
+            }
             if(type == serialization::Context::TYPE_NAME)
+            {
                 ostream<<'{';
+            }
             else if(type == serialization::Context::TYPE_INDEX)
+            {
                 ostream<<'[';
+            }
         }
 
-        ~StringSerializer()
+        ~StringSerializer() override
         {
             if(type == serialization::Context::TYPE_NAME)
+            {
                 ostream<<'}';
+            }
             else if(type == serialization::Context::TYPE_INDEX)
+            {
                 ostream<<']';
+            }
         }
 
+        [[nodiscard]]
         serialization::Context::Type contextType() const override
         {
             return type;
@@ -126,7 +138,7 @@ namespace
 
         void write(serialization::Null, const serialization::Context &context) override
         {
-            write("<null>", context);
+            write(std::string("<null>"), context);
         }
         void write(bool value, const serialization::Context &context) override
         {
@@ -198,9 +210,13 @@ namespace
         void writeSeparator()
         {
             if(!first)
+            {
                 ostream<<", ";
+            }
             else
+            {
                 first = false;
+            }
         }
 
         template<typename T>
@@ -208,12 +224,18 @@ namespace
         {
             writeSeparator();
             if(context.getType() == serialization::Context::TYPE_NAME)
+            {
                 ostream<<context.getName()<<':'<<value;
+            }
             else if(context.getType() == serialization::Context::TYPE_INDEX)
+            {
                 ostream<<value;
+            }
             else
+            {
                 throw serialization::exception::SerializerException(
-                    context);
+                        context);
+            }
         }
 
     private:
@@ -225,7 +247,6 @@ namespace
     template<typename T>
     void print(std::ostream &ostream, const T &value)
     {
-        ostream<<value.getClassName()<<": ";
         StringSerializer serializer(ostream);
         serializer<<value;
     }
@@ -237,7 +258,9 @@ namespace
         T res{};
         typename T::value_type current(first);
         for(std::size_t i = 0; i < count; ++i)
+        {
             res.push_back(current++);
+        }
         return res;
     }
 
@@ -247,14 +270,14 @@ namespace
         int num;
     };
 
-    SERIALIZABLE_CLASS(CustomClass)
+    MT_CLASS(CustomClass)
     {
     public:
-        CustomClass(Data data)
-            :data(data)
+        explicit CustomClass(Data data)
+            :data(std::move(data))
         {}
 
-        SERIALIZABLE_FIELD(Data, data);
+        MT_FIELD(data, Data);
     };
 
     class DataDeserializer: public serialization::IDeserializer
@@ -264,6 +287,7 @@ namespace
             :data(data)
         {}
 
+        [[nodiscard]]
         serialization::Context::Type contextType() const override
         {
             return serialization::Context::TYPE_NAME;
@@ -285,6 +309,7 @@ namespace
             :data(data)
         {}
 
+        [[nodiscard]]
         serialization::Context::Type contextType() const override
         {
             return serialization::Context::TYPE_NAME;
@@ -346,16 +371,16 @@ struct serialization::SerializationTrait<Data>
 int main()
 {
     std::stringstream ostream;
-    Point p(42, 43);
+    const Point p(42, 43);
     print(ostream, p);
     ostream<<std::endl;
     Line l(Point(1, 2), Point(3, 4));
     print(ostream, l);
     ostream<<std::endl;
-    Vector v(generate<Vector::ValueType>(42, 10));
+    const Vector v(generate<Vector::ValueType>(42, 10));
     print(ostream, v);
     ostream<<std::endl;
-    PointVector pv(generate<PointVector::ValueType>(Point(), 10));
+    const PointVector pv(generate<PointVector::ValueType>(Point(), 10));
     print(ostream, pv);
     ostream<<std::endl;
     print(ostream, CustomClass{Data{"foobar", 42}});

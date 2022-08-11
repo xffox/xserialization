@@ -15,6 +15,7 @@
 #include "serialization/typeutil.hpp"
 #include "serialization/exception/serializer_exception.hpp"
 #include "serialization/exception/deserializer_exception.hpp"
+#include "serialization/inner/attribute.hpp"
 
 namespace serialization::inner
 {
@@ -28,15 +29,21 @@ namespace serialization::inner
     public:
         virtual ~MetaObject() = 0;
 
+        [[nodiscard]]
         virtual const FieldMap &fields() const = 0;
-
-        virtual bool weakClass() const = 0;
+        [[nodiscard]]
+        virtual AttrMask attributes() const = 0;
+        [[nodiscard]]
+        virtual const std::string &className() const = 0;
     };
 
     class IField
     {
     public:
         virtual ~IField() = 0;
+
+        [[nodiscard]]
+        virtual AttrMask attributes() const = 0;
 
         virtual void visit(ISerializer &serializer, const MetaObject &object) = 0;
 
@@ -178,20 +185,22 @@ namespace serialization::inner
         typename typeutil::SerializationTrivialTypes<
             PartialTargetConvertedField<Target>::template Type>::Type;
 
-    template<class T, bool weak>
+    template<class T, AttrMask classAttributes>
     class MetaObjectBase: public MetaObject
     {
     public:
         ~MetaObjectBase() override = 0;
 
+        [[nodiscard]]
         const FieldMap &fields() const override
         {
             return MetaObjectBase::getFields();
         }
 
-        bool weakClass() const override
+        [[nodiscard]]
+        AttrMask attributes() const override
         {
-            return weak;
+            return classAttributes;
         }
 
     protected:
@@ -211,8 +220,8 @@ namespace serialization::inner
         }
     };
 
-    template<class T, bool weak>
-    MetaObjectBase<T, weak>::~MetaObjectBase() = default;
+    template<class T, AttrMask classAttributes>
+    MetaObjectBase<T, classAttributes>::~MetaObjectBase() = default;
 }
 
 #endif

@@ -7,12 +7,12 @@
 #include "serialization/serialization.hpp"
 
 #define VALUE(cl, type) \
-    SERIALIZABLE_CLASS(cl) \
+    MT_CLASS(cl) \
     { \
     public: \
         cl():value(){} \
         cl(const type &value):value(value){} \
-        SERIALIZABLE_FIELD(type, value); \
+        MT_FIELD(value, type); \
         bool operator==(const cl &that) const \
         { return value == that.value; } \
     }
@@ -21,7 +21,7 @@ namespace serialization::test
 {
     namespace
     {
-        SERIALIZABLE_CLASS(Point)
+        MT_CLASS(Point)
         {
         public:
             Point()
@@ -44,8 +44,8 @@ namespace serialization::test
                 return res;
             }
 
-            SERIALIZABLE_FIELD(int, x);
-            SERIALIZABLE_FIELD(int, y);
+            MT_FIELD(x, int);
+            MT_FIELD(y, int);
         };
 
         inline bool operator==(const Point &left, const Point &right)
@@ -53,7 +53,7 @@ namespace serialization::test
             return left.x == right.x && left.y == right.y;
         }
 
-        SERIALIZABLE_CLASS(Line)
+        MT_CLASS(Line)
         {
         public:
             Line()
@@ -63,11 +63,11 @@ namespace serialization::test
                 :begin(begin), end(end)
             {}
 
-            SERIALIZABLE_FIELD(Point, begin);
-            SERIALIZABLE_FIELD(Point, end);
+            MT_FIELD(begin, Point);
+            MT_FIELD(end, Point);
         };
 
-        SERIALIZABLE_CLASS(Vector)
+        MT_CLASS(Vector)
         {
         public:
             typedef std::vector<int> ValueType;
@@ -80,10 +80,10 @@ namespace serialization::test
             :v(v)
             {}
 
-            SERIALIZABLE_FIELD(std::vector<int>, v);
+            MT_FIELD(v, std::vector<int>);
         };
 
-        SERIALIZABLE_CLASS(PointVector)
+        MT_CLASS(PointVector)
         {
         public:
             typedef std::vector<Point> ValueType;
@@ -96,7 +96,7 @@ namespace serialization::test
             :v(v)
             {}
 
-            SERIALIZABLE_FIELD(std::vector<Point>, v);
+            MT_FIELD(v, std::vector<Point>);
         };
 
         inline bool operator==(const Line &left, const Line &right)
@@ -148,50 +148,51 @@ namespace serialization::test
 
     namespace
     {
-        SERIALIZABLE_CLASS(SignedCharWeakClass)
+        MT_CLASS(SignedCharWeakClass)
         {
         public:
             SignedCharWeakClass(signed char value)
                 :value(value)
             {}
 
-            SERIALIZABLE_WEAK_FIELD(signed char, value);
+            MT_FIELD(value, signed char, MT_FIELD_ATTR_WEAK);
         };
-        bool operator==(const SignedCharWeakClass &left, const SignedCharWeakClass &right)
+        bool operator==(const SignedCharWeakClass &left,
+                const SignedCharWeakClass &right)
         {
             return left.value == right.value;
         }
-        SERIALIZABLE_CLASS(IntWeakClass)
+        MT_CLASS(IntWeakClass)
         {
         public:
             IntWeakClass(int value)
                 :value(value)
             {}
 
-            SERIALIZABLE_WEAK_FIELD(int, value);
+            MT_FIELD(value, int, MT_FIELD_ATTR_WEAK);
         };
         bool operator==(const IntWeakClass &left, const IntWeakClass &right)
         {
             return left.value == right.value;
         }
 
-        SERIALIZABLE_CLASS(SignedCharStrongClass)
+        MT_CLASS(SignedCharStrongClass)
         {
         public:
             SignedCharStrongClass(signed char value)
                 :value(value)
             {}
 
-            SERIALIZABLE_FIELD(signed char, value);
+            MT_FIELD(value, signed char);
         };
-        SERIALIZABLE_CLASS(IntStrongClass)
+        MT_CLASS(IntStrongClass)
         {
         public:
             IntStrongClass(int value)
                 :value(value)
             {}
 
-            SERIALIZABLE_FIELD(int, value);
+            MT_FIELD(value, int);
         };
     }
 
@@ -216,6 +217,8 @@ namespace serialization::test
         CPPUNIT_TEST(testClassAllFields);
         CPPUNIT_TEST(testClassMissingFields);
         CPPUNIT_TEST(testWeakClassMissingFields);
+        CPPUNIT_TEST(testExtraFieldThrow);
+        CPPUNIT_TEST(testOpenClassExtraField);
         CPPUNIT_TEST_SUITE_END();
     public:
         void testSerializePlain()
@@ -311,16 +314,16 @@ namespace serialization::test
         void testClassName()
         {
             CPPUNIT_ASSERT_EQUAL(std::string("Point"),
-                std::string(Point::getClassName()));
+                    Point().className());
             CPPUNIT_ASSERT_EQUAL(std::string("Line"),
-                std::string(Line::getClassName()));
+                    Line().className());
             CPPUNIT_ASSERT_EQUAL(std::string("Vector"),
-                std::string(Vector::getClassName()));
+                    Vector().className());
         }
 
         void testWeakFieldsShortToInt()
         {
-            SignedCharWeakClass charValue{42};
+            const SignedCharWeakClass charValue{42};
             IntWeakClass intValue{0};
             serialization::toDeserializer(charValue)>>intValue;
             CPPUNIT_ASSERT(IntWeakClass{42} == intValue);
@@ -328,7 +331,7 @@ namespace serialization::test
 
         void testWeakFieldsIntToShort()
         {
-            IntWeakClass intValue{42};
+            const IntWeakClass intValue{42};
             SignedCharWeakClass charValue{0};
             serialization::toDeserializer(intValue)>>charValue;
             CPPUNIT_ASSERT(SignedCharWeakClass{42} == charValue);
@@ -336,7 +339,7 @@ namespace serialization::test
 
         void testStrongFields()
         {
-            SignedCharStrongClass charValue{42};
+            const SignedCharStrongClass charValue{42};
             IntStrongClass intValue{0};
             serialization::DeserializationTrait<SignedCharStrongClass>::toDeserializer(charValue)>>intValue;
         }
@@ -358,7 +361,7 @@ namespace serialization::test
 
         void testClassAllFields()
         {
-            FieldCl exp(42, 43, 84, 101);
+            const FieldCl exp(42, 43, 84, 101);
             std::unordered_map<std::string, int> src{
                 {"a", exp.a},
                 {"b", exp.b},
@@ -384,7 +387,7 @@ namespace serialization::test
 
         void testWeakClassMissingFields()
         {
-            FieldWeakCl exp(42, 43, 131, 1001);
+            const FieldWeakCl exp(42, 43, 131, 1001);
             std::unordered_map<std::string, int> src{
                 {"a", exp.a},
                 {"b", exp.b},
@@ -397,18 +400,65 @@ namespace serialization::test
             CPPUNIT_ASSERT(exp == act);
         }
 
+        void testExtraFieldThrow()
+        {
+            MT_CLASS(Cl)
+            {
+            public:
+                MT_FIELD(a, int, MT_FIELD_ATTR_WEAK);
+                MT_FIELD(b, int, MT_FIELD_ATTR_WEAK);
+            };
+            Cl act{};
+            const std::unordered_map<std::string, int> src{
+                {"a", 42},
+                {"b", 888},
+                {"c", 101},
+            };
+            auto s = toSerializer(act);
+            CPPUNIT_ASSERT_THROW(s<<src, exception::SerializerException);
+        }
+
+        void testOpenClassExtraField()
+        {
+            MT_CLASS(Cl, MT_CLASS_ATTR_OPEN)
+            {
+            public:
+                Cl() = default;
+                Cl(int a, int b)
+                    :a(a), b(b)
+                {}
+                MT_FIELD(a, int, MT_FIELD_ATTR_WEAK);
+                MT_FIELD(b, int, MT_FIELD_ATTR_WEAK);
+
+                bool operator==(const Cl &that) const
+                {
+                    return a == that.a && b == that.b;
+                }
+            };
+            const Cl exp{42, 888};
+            const std::unordered_map<std::string, int> src{
+                {"a", 42},
+                {"b", 888},
+                {"c", 101},
+           };
+            Cl act{};
+            auto s = toSerializer(act);
+            s<<src;
+            CPPUNIT_ASSERT(exp == act);
+        }
+
     private:
-        SERIALIZABLE_CLASS(FieldCl)
+        MT_CLASS(FieldCl)
         {
         public:
             FieldCl() = default;
             FieldCl(int a, int b, int c, int d)
                 :a(a), b(b), c(c), d(d)
             {}
-            SERIALIZABLE_FIELD(int, a);
-            SERIALIZABLE_FIELD(int, b);
-            SERIALIZABLE_FIELD(int, c);
-            SERIALIZABLE_FIELD(int, d);
+            MT_FIELD(a, int);
+            MT_FIELD(b, int);
+            MT_FIELD(c, int);
+            MT_FIELD(d, int);
 
             bool operator==(const FieldCl &that) const
             {
@@ -416,17 +466,17 @@ namespace serialization::test
             }
         };
 
-        SERIALIZABLE_WEAK_CLASS(FieldWeakCl)
+        MT_CLASS(FieldWeakCl)
         {
         public:
             FieldWeakCl() = default;
             FieldWeakCl(int a, int b, int c, int d)
                 :a(a), b(b), c(c), d(d)
             {}
-            SERIALIZABLE_FIELD(int, a);
-            SERIALIZABLE_FIELD(int, b);
-            SERIALIZABLE_FIELD(int, c);
-            SERIALIZABLE_FIELD(int, d);
+            MT_FIELD(a, int, MT_FIELD_ATTR_OPTIONAL);
+            MT_FIELD(b, int, MT_FIELD_ATTR_OPTIONAL);
+            MT_FIELD(c, int, MT_FIELD_ATTR_OPTIONAL);
+            MT_FIELD(d, int, MT_FIELD_ATTR_OPTIONAL);
 
             bool operator==(const FieldWeakCl &that) const
             {

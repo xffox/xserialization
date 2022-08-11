@@ -6,7 +6,7 @@
 #include "serialization/deserializer.hpp"
 #include "serialization/serialization_trait.hpp"
 #include "serialization/operator.hpp"
-#include "serialization/serializable_class.hpp"
+#include "serialization/meta_annotation.hpp"
 #include "serialization/util.hpp"
 #include "serialization/typeutil.hpp"
 #include "serialization/null.hpp"

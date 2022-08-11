@@ -1,13 +1,21 @@
-#include "serialization//inner/meta_object_serializer.hpp"
+#include "serialization/inner/meta_object_serializer.hpp"
 
 #include <algorithm>
 #include <iterator>
+
+#include "serialization/inner/attribute.hpp"
 
 namespace serialization::inner
 {
     bool MetaObjectSerializer::allFieldsUsed() const
     {
         return unusedFields.empty();
+    }
+
+    bool MetaObjectSerializer::isOpenObject() const
+    {
+        return static_cast<bool>(object.attributes() &
+                static_cast<AttrMask>(ClassAttribute::OPEN));
     }
 
     Context::Type MetaObjectSerializer::contextType() const
@@ -20,11 +28,14 @@ namespace serialization::inner
     {
         std::unordered_set<std::string> result;
         const auto& fields = object.fields();
-        std::transform(std::begin(fields), std::end(fields),
-                std::inserter(result, std::end(result)),
-                [](const auto &p){
-                    return p.first;
-                });
+        for(const auto &field : fields)
+        {
+            if(!static_cast<bool>(field.second->attributes() &
+                        static_cast<AttrMask>(FieldAttribute::OPTIONAL)))
+            {
+                result.insert(field.first);
+            }
+        }
         return result;
     }
 }

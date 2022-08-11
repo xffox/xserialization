@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <limits>
 
-#include "serialization/serialization.hpp"
+#include "xserialization/serialization.hpp"
 
 #define VALUE(cl, type) \
     MT_CLASS(cl) \
@@ -17,7 +17,7 @@
         { return value == that.value; } \
     }
 
-namespace serialization::test
+namespace xserialization::test
 {
     namespace
     {
@@ -211,9 +211,9 @@ namespace serialization::test
         CPPUNIT_TEST(testWeakFieldsShortToInt);
         CPPUNIT_TEST(testWeakFieldsIntToShort);
         CPPUNIT_TEST_EXCEPTION(testStrongFields,
-                serialization::exception::SerializationException);
+                xserialization::exception::SerializationException);
         CPPUNIT_TEST_EXCEPTION(testWeakFieldsOverflow,
-                serialization::exception::SerializationException);
+                xserialization::exception::SerializationException);
         CPPUNIT_TEST(testClassAllFields);
         CPPUNIT_TEST(testClassMissingFields);
         CPPUNIT_TEST(testWeakClassMissingFields);
@@ -325,7 +325,7 @@ namespace serialization::test
         {
             const SignedCharWeakClass charValue{42};
             IntWeakClass intValue{0};
-            serialization::toDeserializer(charValue)>>intValue;
+            xserialization::toDeserializer(charValue)>>intValue;
             CPPUNIT_ASSERT(IntWeakClass{42} == intValue);
         }
 
@@ -333,7 +333,7 @@ namespace serialization::test
         {
             const IntWeakClass intValue{42};
             SignedCharWeakClass charValue{0};
-            serialization::toDeserializer(intValue)>>charValue;
+            xserialization::toDeserializer(intValue)>>charValue;
             CPPUNIT_ASSERT(SignedCharWeakClass{42} == charValue);
         }
 
@@ -341,7 +341,7 @@ namespace serialization::test
         {
             const SignedCharStrongClass charValue{42};
             IntStrongClass intValue{0};
-            serialization::DeserializationTrait<SignedCharStrongClass>::toDeserializer(charValue)>>intValue;
+            xserialization::DeserializationTrait<SignedCharStrongClass>::toDeserializer(charValue)>>intValue;
         }
 
         void testWeakFieldsOverflow()
@@ -350,7 +350,7 @@ namespace serialization::test
             {
                 IntWeakClass intValue{std::numeric_limits<int>::max()};
                 SignedCharWeakClass charValue{0};
-                serialization::DeserializationTrait<IntWeakClass>::toDeserializer(intValue)>>charValue;
+                xserialization::DeserializationTrait<IntWeakClass>::toDeserializer(intValue)>>charValue;
             }
             else
             {
@@ -488,7 +488,7 @@ namespace serialization::test
         bool validateSerialization(const T &value)
         {
             T actual;
-            auto serializer = serialization::toSerializer(actual);
+            auto serializer = xserialization::toSerializer(actual);
             serializer<<value;
             return value == actual;
         }
@@ -499,7 +499,7 @@ namespace serialization::test
             T v(value);
             const T expected(v);
             T actual;
-            serialization::toDeserializer(v)>>actual;
+            xserialization::toDeserializer(v)>>actual;
             return expected == actual;
         }
     };

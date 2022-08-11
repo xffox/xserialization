@@ -1,6 +1,6 @@
-#include "serialization/inner/meta_object.hpp"
+#include "xserialization/inner/meta_object.hpp"
 
-namespace serialization::inner
+namespace xserialization::inner
 {
     MetaObject::~MetaObject() = default;
 

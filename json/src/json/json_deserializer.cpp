@@ -1,4 +1,4 @@
-#include "serialization/json/json_deserializer.hpp"
+#include "xserialization/json/json_deserializer.hpp"
 
 #include <iterator>
 #include <optional>
@@ -6,12 +6,12 @@
 
 #include <nlohmann/json.hpp>
 
-#include "serialization/context.hpp"
-#include "serialization/serializer.hpp"
-#include "serialization/null.hpp"
-#include "serialization/exception/serialization_exception.hpp"
+#include "xserialization/context.hpp"
+#include "xserialization/serializer.hpp"
+#include "xserialization/null.hpp"
+#include "xserialization/exception/serialization_exception.hpp"
 
-namespace serialization::json
+namespace xserialization::json
 {
     namespace
     {

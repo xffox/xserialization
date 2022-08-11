@@ -1,10 +1,10 @@
-#include "serialization/inner/meta_object_deserializer.hpp"
+#include "xserialization/inner/meta_object_deserializer.hpp"
 
 #include <iterator>
 
-#include "serialization/exception/deserializer_exception.hpp"
+#include "xserialization/exception/deserializer_exception.hpp"
 
-namespace serialization::inner
+namespace xserialization::inner
 {
     Context::Type MetaObjectDeserializer::contextType() const
     {

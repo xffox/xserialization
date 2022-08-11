@@ -1,12 +1,12 @@
-#include "serialization/json/json.hpp"
+#include "xserialization/json/json.hpp"
 
 #include <string>
 
 #include <nlohmann/json.hpp>
 
-#include <serialization/exception/serializer_exception.hpp>
+#include <xserialization/exception/serializer_exception.hpp>
 
-namespace serialization::json
+namespace xserialization::json
 {
     namespace
     {

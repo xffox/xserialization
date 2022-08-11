@@ -1,11 +1,11 @@
-#include "serialization/inner/meta_object_serializer.hpp"
+#include "xserialization/inner/meta_object_serializer.hpp"
 
 #include <algorithm>
 #include <iterator>
 
-#include "serialization/inner/attribute.hpp"
+#include "xserialization/inner/attribute.hpp"
 
-namespace serialization::inner
+namespace xserialization::inner
 {
     bool MetaObjectSerializer::allFieldsUsed() const
     {

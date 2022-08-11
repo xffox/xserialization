@@ -1,6 +1,6 @@
-#include "serialization/base_serializer.hpp"
+#include "xserialization/base_serializer.hpp"
 
-namespace serialization
+namespace xserialization
 {
     BaseSerializer::~BaseSerializer() = default;
 }

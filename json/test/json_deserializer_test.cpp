@@ -7,10 +7,10 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include <serialization/serialization.hpp>
-#include <serialization/json/json_serialization.hpp>
+#include <xserialization/serialization.hpp>
+#include <xserialization/json/json_serialization.hpp>
 
-namespace serialization::json::test
+namespace xserialization::json::test
 {
     namespace
     {

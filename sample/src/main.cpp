@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <utility>
 
-#include <serialization/serialization.hpp>
+#include <xserialization/serialization.hpp>
 
 namespace
 {
@@ -84,27 +84,27 @@ namespace
         MT_FIELD(v, std::vector<Point>);
     };
 
-    class StringSerializer: public serialization::ISerializer
+    class StringSerializer: public xserialization::ISerializer
     {
     public:
         StringSerializer(std::ostream &ostream)
-            :first(true), type(serialization::Context::TYPE_NONE),
+            :first(true), type(xserialization::Context::TYPE_NONE),
             ostream(ostream)
         {}
 
-        StringSerializer(std::ostream &ostream, serialization::Context::Type type,
-            const serialization::Context &context)
+        StringSerializer(std::ostream &ostream, xserialization::Context::Type type,
+            const xserialization::Context &context)
             :first(true), type(type), ostream(ostream)
         {
-            if(context.getType() == serialization::Context::TYPE_NAME)
+            if(context.getType() == xserialization::Context::TYPE_NAME)
             {
                 ostream<<context.getName()<<": ";
             }
-            if(type == serialization::Context::TYPE_NAME)
+            if(type == xserialization::Context::TYPE_NAME)
             {
                 ostream<<'{';
             }
-            else if(type == serialization::Context::TYPE_INDEX)
+            else if(type == xserialization::Context::TYPE_INDEX)
             {
                 ostream<<'[';
             }
@@ -112,96 +112,96 @@ namespace
 
         ~StringSerializer() override
         {
-            if(type == serialization::Context::TYPE_NAME)
+            if(type == xserialization::Context::TYPE_NAME)
             {
                 ostream<<'}';
             }
-            else if(type == serialization::Context::TYPE_INDEX)
+            else if(type == xserialization::Context::TYPE_INDEX)
             {
                 ostream<<']';
             }
         }
 
         [[nodiscard]]
-        serialization::Context::Type contextType() const override
+        xserialization::Context::Type contextType() const override
         {
             return type;
         }
 
-        void write(const serialization::IDeserializer &value,
-                const serialization::Context &context) override
+        void write(const xserialization::IDeserializer &value,
+                const xserialization::Context &context) override
         {
             writeSeparator();
             StringSerializer serializer(ostream, value.contextType(), context);
             value.visit(serializer);
         }
 
-        void write(serialization::Null, const serialization::Context &context) override
+        void write(xserialization::Null, const xserialization::Context &context) override
         {
             write(std::string("<null>"), context);
         }
-        void write(bool value, const serialization::Context &context) override
+        void write(bool value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(char value, const serialization::Context &context) override
+        void write(char value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(signed char value, const serialization::Context &context) override
+        void write(signed char value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(unsigned char value, const serialization::Context &context) override
+        void write(unsigned char value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(short value, const serialization::Context &context) override
+        void write(short value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(unsigned short value, const serialization::Context &context) override
+        void write(unsigned short value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(int value, const serialization::Context &context) override
+        void write(int value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(unsigned int value, const serialization::Context &context) override
+        void write(unsigned int value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(long value, const serialization::Context &context) override
+        void write(long value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(unsigned long value, const serialization::Context &context) override
+        void write(unsigned long value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(long long value, const serialization::Context &context) override
+        void write(long long value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(unsigned long long value, const serialization::Context &context) override
+        void write(unsigned long long value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(float value, const serialization::Context &context) override
+        void write(float value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(double value, const serialization::Context &context) override
+        void write(double value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
-        void write(long double value, const serialization::Context &context) override
+        void write(long double value, const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
         void write(const std::string &value,
-            const serialization::Context &context) override
+            const xserialization::Context &context) override
         {
             writeValue(value, context);
         }
@@ -220,27 +220,27 @@ namespace
         }
 
         template<typename T>
-        void writeValue(const T &value, const serialization::Context &context)
+        void writeValue(const T &value, const xserialization::Context &context)
         {
             writeSeparator();
-            if(context.getType() == serialization::Context::TYPE_NAME)
+            if(context.getType() == xserialization::Context::TYPE_NAME)
             {
                 ostream<<context.getName()<<':'<<value;
             }
-            else if(context.getType() == serialization::Context::TYPE_INDEX)
+            else if(context.getType() == xserialization::Context::TYPE_INDEX)
             {
                 ostream<<value;
             }
             else
             {
-                throw serialization::exception::SerializerException(
+                throw xserialization::exception::SerializerException(
                         context);
             }
         }
 
     private:
         bool first;
-        serialization::Context::Type type;
+        xserialization::Context::Type type;
         std::ostream &ostream;
     };
 
@@ -280,7 +280,7 @@ namespace
         MT_FIELD(data, Data);
     };
 
-    class DataDeserializer: public serialization::IDeserializer
+    class DataDeserializer: public xserialization::IDeserializer
     {
     public:
         explicit DataDeserializer(const Data &data)
@@ -288,12 +288,12 @@ namespace
         {}
 
         [[nodiscard]]
-        serialization::Context::Type contextType() const override
+        xserialization::Context::Type contextType() const override
         {
-            return serialization::Context::TYPE_NAME;
+            return xserialization::Context::TYPE_NAME;
         }
 
-        void visit(serialization::ISerializer &serializer) const override
+        void visit(xserialization::ISerializer &serializer) const override
         {
             serializer.write(data.str, "str");
             serializer.write(data.num, "num");
@@ -302,7 +302,7 @@ namespace
         const Data &data;
     };
 
-    class DataSerializer: public serialization::BaseSerializer
+    class DataSerializer: public xserialization::BaseSerializer
     {
     public:
         explicit DataSerializer(Data &data)
@@ -310,33 +310,33 @@ namespace
         {}
 
         [[nodiscard]]
-        serialization::Context::Type contextType() const override
+        xserialization::Context::Type contextType() const override
         {
-            return serialization::Context::TYPE_NAME;
+            return xserialization::Context::TYPE_NAME;
         }
 
-        void write(const serialization::IDeserializer &value,
-                const serialization::Context &context) override
+        void write(const xserialization::IDeserializer &value,
+                const xserialization::Context &context) override
         {
-            if(context.getType() != serialization::Context::TYPE_NONE)
+            if(context.getType() != xserialization::Context::TYPE_NONE)
             {
-                throw serialization::exception::SerializerException(context);
+                throw xserialization::exception::SerializerException(context);
             }
             value.visit(*this);
         }
-        void write(const std::string &value, const serialization::Context &context) override
+        void write(const std::string &value, const xserialization::Context &context) override
         {
-            if(context != serialization::Context("str"))
+            if(context != xserialization::Context("str"))
             {
-                throw serialization::exception::SerializerException(context);
+                throw xserialization::exception::SerializerException(context);
             }
             data.str = value;
         }
-        void write(int value, const serialization::Context &context) override
+        void write(int value, const xserialization::Context &context) override
         {
-            if(context != serialization::Context("num"))
+            if(context != xserialization::Context("num"))
             {
-                throw serialization::exception::SerializerException(context);
+                throw xserialization::exception::SerializerException(context);
             }
             data.num = value;
         }
@@ -347,7 +347,7 @@ namespace
 }
 
 template<>
-struct serialization::DeserializationTrait<Data>
+struct xserialization::DeserializationTrait<Data>
 {
     using Deserializer = DataDeserializer;
 
@@ -358,7 +358,7 @@ struct serialization::DeserializationTrait<Data>
 };
 
 template<>
-struct serialization::SerializationTrait<Data>
+struct xserialization::SerializationTrait<Data>
 {
     using Serializer = DataSerializer;
 

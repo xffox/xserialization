@@ -1,10 +1,10 @@
-#include "serialization/json/json_serializer.hpp"
+#include "xserialization/json/json_serializer.hpp"
 
 #include <cassert>
 
-#include "serialization/exception/serializer_exception.hpp"
+#include "xserialization/exception/serializer_exception.hpp"
 
-namespace serialization::json
+namespace xserialization::json
 {
     Context::Type JSONSerializer::contextType() const
     {

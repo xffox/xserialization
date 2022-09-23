@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.0)
 project(xserialization)
 
 include(CTest)
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -16,6 +18,17 @@ if(UNIX)
 elseif(WIN32)
     add_compile_options("-DNOMINMAX")
 endif()
+
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/XSerializationConfig.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/XSerialization")
+
+install(EXPORT XSerializationTargets NAMESPACE xserialization::
+    FILE "XSerializationConfig.cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/XSerialization")
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/XSerializationConfig.cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/XSerialization")
 
 add_subdirectory(serialization)
 if(USE_JSON)

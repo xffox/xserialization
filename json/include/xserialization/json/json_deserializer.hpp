@@ -4,26 +4,20 @@
 #include <nlohmann/json.hpp>
 
 #include <xserialization/deserializer.hpp>
+#include "xserialization/json/json_base.hpp"
 
 namespace xserialization::json
 {
-    class JSON;
-
-    class JSONDeserializer: public IDeserializer
+    class JSONDeserializer: public JSONBase<const nlohmann::json, IDeserializer>
     {
-        friend JSON;
+        friend class JSON;
     public:
-        Context::Type contextType() const override;
-
         void visit(ISerializer &serializer) const override;
 
     private:
-        JSONDeserializer(const nlohmann::json &value)
-            :value(value)
+        explicit JSONDeserializer(const nlohmann::json &value)
+            :JSONBase(value)
         {}
-
-    private:
-        const nlohmann::json &value;
     };
 }
 

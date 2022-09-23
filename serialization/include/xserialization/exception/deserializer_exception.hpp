@@ -12,10 +12,6 @@ namespace xserialization::exception
     class DeserializerException: public SerializationException
     {
     public:
-        DeserializerException()
-            :SerializationException()
-        {}
-
         template<typename T, typename =
             std::enable_if_t<std::is_constructible_v<std::string, T>>>
         DeserializerException(T &&msg)

@@ -22,14 +22,13 @@ namespace xserialization::exception
                 :msg_(std::forward<T>(msg))
             {}
 
-            ~SerializationException() throw() override
-            {}
-
-            const char *what() const throw() override
+            [[nodiscard]]
+            const char *what() const noexcept override
             {
                 return "xserialization exception";
             }
 
+            [[nodiscard]]
             const std::string &msg() const
             {
                 return msg_;

@@ -3,6 +3,7 @@
 
 #include <type_traits>
 #include <string>
+#include <cassert>
 
 #include "xserialization/inner/meta_object.hpp"
 #include "xserialization/typeutil.hpp"
@@ -90,7 +91,9 @@ inline constexpr auto MT_CLASS_ATTR_OPEN =
         using xserialization::inner::FieldBase<__VA_ARGS__>::write; \
         _##name##FieldType() \
         { \
-            BaseClass::addField(#name, *this); \
+            const auto res = BaseClass::addField(#name, *this); \
+            assert(res); \
+            (void)res; \
         } \
         void visit(xserialization::ISerializer &serializer, \
             const xserialization::inner::MetaObject &object) override \

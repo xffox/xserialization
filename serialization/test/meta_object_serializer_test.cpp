@@ -207,6 +207,7 @@ namespace xserialization::test
         CPPUNIT_TEST(testDeserializeCollectionPlain);
         CPPUNIT_TEST(testSerializeCollectionComplex);
         CPPUNIT_TEST(testDeserializeCollectionComplex);
+        CPPUNIT_TEST(testSerializeDictPlain);
         CPPUNIT_TEST(testClassName);
         CPPUNIT_TEST(testWeakFieldsShortToInt);
         CPPUNIT_TEST(testWeakFieldsIntToShort);
@@ -309,6 +310,14 @@ namespace xserialization::test
                         generate<PointVector::ValueType>(Point(), 1))));
             CPPUNIT_ASSERT(validateDeserialization(PointVector(
                         generate<PointVector::ValueType>(Point(), 10))));
+        }
+
+        void testSerializeDictPlain()
+        {
+            std::unordered_map<std::string, int> values{
+                {"", 42},
+            };
+            CPPUNIT_ASSERT(validateSerialization(values));
         }
 
         void testClassName()

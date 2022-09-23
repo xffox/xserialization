@@ -13,8 +13,8 @@ namespace xserialization::exception
     class SerializerException: public SerializationException
     {
     public:
-        SerializerException(const Context &context)
-            :SerializationException(), context(context)
+        explicit SerializerException(const Context &context)
+            :context(context)
         {}
 
         template<typename T, typename =
@@ -23,11 +23,12 @@ namespace xserialization::exception
             :SerializationException(std::forward<T>(msg)), context(context)
         {}
 
+        [[nodiscard]]
         const Context &getContext() const
         {
             return context;
         }
-        
+
     private:
         Context context;
     };

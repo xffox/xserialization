@@ -15,9 +15,9 @@ namespace xserialization
     public:
         virtual ~ISerializer() = default;
 
+        [[nodiscard]]
         virtual Context::Type contextType() const = 0;
 
-        // TODO: not sure, maybe sized values are better: std::int32_t, etc.
         virtual void write(const IDeserializer &value, const Context &context) = 0;
         virtual void write(Null, const Context &context) = 0;
         virtual void write(bool value, const Context &context) = 0;

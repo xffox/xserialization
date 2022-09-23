@@ -41,9 +41,7 @@ namespace
     MT_CLASS(Line)
     {
     public:
-        Line()
-            :begin(), end()
-        {}
+        Line() = default;
         Line(Point begin, Point end)
             :begin(std::move(begin)), end(std::move(end))
         {}
@@ -58,9 +56,7 @@ namespace
         using ValueType = std::vector<int>;
 
     public:
-        Vector()
-        :v()
-        {}
+        Vector() = default;
         Vector(std::vector<int> v)
         :v(std::move(v))
         {}
@@ -74,9 +70,7 @@ namespace
         using ValueType = std::vector<Point>;
 
     public:
-        PointVector()
-        :v()
-        {}
+        PointVector() = default;
         PointVector(std::vector<Point> v)
         :v(std::move(v))
         {}

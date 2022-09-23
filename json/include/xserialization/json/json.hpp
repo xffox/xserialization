@@ -18,7 +18,9 @@ namespace xserialization::json
 
         operator std::string() const;
 
+        [[nodiscard]]
         JSONSerializer serializer();
+        [[nodiscard]]
         JSONDeserializer deserializer() const;
 
     private:

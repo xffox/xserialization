@@ -1,6 +1,7 @@
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/TextTestRunner.h>
 #include <string>
+
+#include <cppunit/TextTestRunner.h>
+#include <cppunit/extensions/TestFactoryRegistry.h>
 
 int main()
 {
@@ -8,5 +9,5 @@ int main()
     CppUnit::TestFactoryRegistry &registry =
         CppUnit::TestFactoryRegistry::getRegistry();
     runner.addTest(registry.makeTest());
-    return !runner.run();
+    return static_cast<int>(!runner.run());
 }

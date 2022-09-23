@@ -4,18 +4,14 @@
 #include <nlohmann/json.hpp>
 
 #include <xserialization/serializer.hpp>
+#include "xserialization/json/json_base.hpp"
 
 namespace xserialization::json
 {
-    class JSON;
-
-    class JSONSerializer: public ISerializer
+    class JSONSerializer: public JSONBase<nlohmann::json, ISerializer>
     {
-        friend JSON;
+        friend class JSON;
     public:
-        [[nodiscard]]
-        Context::Type contextType() const override;
-
         void write(const IDeserializer &value, const Context &context) override;
         void write(Null, const Context &context) override;
 
@@ -85,8 +81,8 @@ namespace xserialization::json
         }
 
     private:
-        JSONSerializer(nlohmann::json &value)
-            :value(value)
+        explicit JSONSerializer(nlohmann::json &value)
+            :JSONBase(value)
         {}
 
         nlohmann::json &get(const Context &context);
@@ -96,9 +92,6 @@ namespace xserialization::json
         {
             get(context) = value;
         }
-
-    private:
-        nlohmann::json &value;
     };
 }
 

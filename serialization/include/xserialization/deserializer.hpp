@@ -12,6 +12,7 @@ namespace xserialization
     public:
         virtual ~IDeserializer() = default;
 
+        [[nodiscard]]
         virtual Context::Type contextType() const = 0;
 
         virtual void visit(ISerializer &serializer) const = 0;

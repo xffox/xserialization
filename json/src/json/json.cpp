@@ -39,11 +39,11 @@ namespace xserialization::json
 
     JSONSerializer JSON::serializer()
     {
-        return JSONSerializer(value);
+        return JSONSerializer{value};
     }
 
     JSONDeserializer JSON::deserializer() const
     {
-        return JSONDeserializer(value);
+        return JSONDeserializer{value};
     }
 }

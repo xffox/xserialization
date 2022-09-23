@@ -6,19 +6,6 @@
 
 namespace xserialization::json
 {
-    Context::Type JSONSerializer::contextType() const
-    {
-        if(value.is_object())
-        {
-            return Context::TYPE_NAME;
-        }
-        if(value.is_array())
-        {
-            return Context::TYPE_INDEX;
-        }
-        return Context::TYPE_NONE;
-    }
-
     void JSONSerializer::write(const IDeserializer &value, const Context &context)
     {
         auto &cur = get(context);

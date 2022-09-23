@@ -39,19 +39,6 @@ namespace xserialization::json
         }
     }
 
-    Context::Type JSONDeserializer::contextType() const
-    {
-        if(value.is_object())
-        {
-            return Context::TYPE_NAME;
-        }
-        if(value.is_array())
-        {
-            return Context::TYPE_INDEX;
-        }
-        return Context::TYPE_NONE;
-    }
-
     void JSONDeserializer::visit(ISerializer &serializer) const
     {
         auto writeValue =
@@ -63,24 +50,26 @@ namespace xserialization::json
                             serializer.write(JSONDeserializer(value), context);
                         });
         };
-        // TODO: remove serializer duplication of this logic
-        if(value.is_object())
+        switch(contextType())
         {
+        case Context::TYPE_NAME:
             for(const auto &el : value.items())
             {
                 writeValue(el.value(), el.key());
             }
-        }
-        else if(value.is_array())
-        {
+            break;
+        case Context::TYPE_INDEX:
             for(auto iter = std::begin(value); iter != std::end(value); ++iter)
             {
                 writeValue(*iter, iter-std::begin(value));
             }
-        }
-        else
-        {
+            break;
+        case Context::TYPE_NONE:
             writeValue(value, {});
+            break;
+        default:
+            assert(false);
+            break;
         }
     }
 }

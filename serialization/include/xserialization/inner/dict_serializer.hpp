@@ -30,9 +30,9 @@ namespace xserialization::inner
             writeValue(value, context);
         }
 
-        void prepareContext(Context::Type type) override;
+    protected:
+        bool prepareContext(Context::Type type) override;
 
-    private:
         template<typename T>
         void writeValue(const T &value, const Context &context);
 
@@ -49,13 +49,9 @@ namespace xserialization::inner
 namespace xserialization::inner
 {
     template<typename Dict>
-    void DictSerializer<Dict>::prepareContext(Context::Type type)
+    bool DictSerializer<Dict>::prepareContext(Context::Type type)
     {
-        if(type != Context::TYPE_NAME)
-        {
-            // TODO: better exception
-            throw exception::SerializerException(Context());
-        }
+        return (type == Context::TYPE_NAME);
     }
 
     template<typename Dict>

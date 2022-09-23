@@ -1,13 +1,13 @@
 #ifndef XSERIALIZATION_INNER_METAOBJECT_HPP
 #define XSERIALIZATION_INNER_METAOBJECT_HPP
 
-#include <cassert>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <tuple>
+#include <utility>
 #include <limits>
-#include <memory>
+#include <cassert>
 
 #include "xserialization/serializer.hpp"
 #include "xserialization/deserializer.hpp"
@@ -213,10 +213,9 @@ namespace xserialization::inner
             return fields;
         }
 
-        static void addField(const std::string &name, IField &field)
+        static bool addField(const std::string &name, IField &field)
         {
-            // TODO: assert uniquety
-            getFields().insert(std::pair<std::string, IField*>(name, &field));
+            return getFields().insert(std::make_pair(name, &field)).second;
         }
     };
 

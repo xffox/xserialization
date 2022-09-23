@@ -32,9 +32,9 @@ namespace xserialization::inner
             CollectionSerializer::writeValue(value, context);
         }
 
-        void prepareContext(Context::Type type) override;
-
     protected:
+        bool prepareContext(Context::Type type) override;
+
         template<typename T>
         void writeValue(const T &value, const Context &context);
 
@@ -52,13 +52,9 @@ namespace xserialization::inner
 namespace xserialization::inner
 {
     template<typename Collection>
-    void CollectionSerializer<Collection>::prepareContext(Context::Type type)
+    bool CollectionSerializer<Collection>::prepareContext(Context::Type type)
     {
-        if(type != Context::TYPE_INDEX)
-        {
-            // TODO: better exception
-            throw exception::SerializerException(Context());
-        }
+        return (type == Context::TYPE_INDEX);
     }
 
     template<typename Collection>
@@ -81,7 +77,7 @@ namespace xserialization::inner
         {
             if(context.getIndex() >= collection.size())
             {
-                collection.resize(context.getIndex() + 1); // TODO: optimize
+                collection.resize(context.getIndex() + 1);
             }
             if(!util::writeValue(collection[context.getIndex()], value))
             {

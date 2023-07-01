@@ -79,23 +79,24 @@ namespace xserialization::json::test
             CPPUNIT_ASSERT(exp == act);
         }
 
+        MT_CLASS(LongValData)
+        {
+        public:
+            LongValData() = default;
+            LongValData(unsigned long long int val)
+                :val(val)
+            {}
+
+            constexpr bool operator==(const LongValData &that) const
+            {
+                return val == that.val;
+            }
+
+            MT_FIELD(val, unsigned long long int) = 0;
+        };
+
         void testLongVal()
         {
-            MT_CLASS(LongValData)
-            {
-            public:
-                LongValData() = default;
-                LongValData(unsigned long long int val)
-                    :val(val)
-                {}
-
-                constexpr bool operator==(const LongValData &that) const
-                {
-                    return val == that.val;
-                }
-
-                MT_FIELD(val, unsigned long long int) = 0;
-            };
             const LongValData exp{std::numeric_limits<decltype(exp.val)>::max()};
             LongValData act{};
             auto &&serializer = toSerializer(act);
@@ -105,38 +106,40 @@ namespace xserialization::json::test
             CPPUNIT_ASSERT(exp == act);
         }
 
+        MT_CLASS(WeakFieldClass)
+        {
+        public:
+            MT_FIELD(val, int, MT_FIELD_ATTR_WEAK) = {};
+        };
+
         void testFloatToIntegerThrow()
         {
-            MT_CLASS(Cl)
-            {
-            public:
-                MT_FIELD(val, int, MT_FIELD_ATTR_WEAK) = {};
-            };
-            Cl act;
+            WeakFieldClass act;
             auto &&serializer = toSerializer(act);
             CPPUNIT_ASSERT_THROW(serializer<<json::JSON("{\"val\": 42.43}"),
                         exception::SerializerException);
         }
 
+        MT_CLASS(FloatWeakFieldClass)
+        {
+        public:
+            FloatWeakFieldClass() = default;
+            explicit FloatWeakFieldClass(float val)
+                :val(val)
+            {}
+            MT_FIELD(val, float, MT_FIELD_ATTR_WEAK) = {};
+
+            constexpr bool operator==(const FloatWeakFieldClass &that) const
+            {
+                // TODO: float comparison
+                return val == that.val;
+            }
+        };
+
         void testIntegerToFloat()
         {
-            MT_CLASS(Cl)
-            {
-            public:
-                Cl() = default;
-                explicit Cl(float val)
-                    :val(val)
-                {}
-                MT_FIELD(val, float, MT_FIELD_ATTR_WEAK) = {};
-
-                constexpr bool operator==(const Cl &that) const
-                {
-                    // TODO: float comparison
-                    return val == that.val;
-                }
-            };
-            const Cl exp{42};
-            Cl act;
+            const FloatWeakFieldClass exp{42};
+            FloatWeakFieldClass act;
             auto &&serializer = toSerializer(act);
             std::stringstream ss;
             ss<<"{\"val\": "<<exp.val<<"}";
@@ -144,38 +147,40 @@ namespace xserialization::json::test
             CPPUNIT_ASSERT(exp == act);
         }
 
+        MT_CLASS(InnerCl)
+        {
+        public:
+            InnerCl() = default;
+            InnerCl(int val)
+                :val(val)
+            {}
+
+            bool operator==(const InnerCl &that) const
+            {
+                return val == that.val;
+            }
+
+            MT_FIELD(val, int, MT_FIELD_ATTR_WEAK);
+        };
+
+        MT_CLASS(OuterCl)
+        {
+        public:
+            OuterCl() = default;
+            OuterCl(InnerCl obj)
+                :obj(std::move(obj))
+            {}
+
+            bool operator==(const OuterCl &that) const
+            {
+                return obj == that.obj;
+            }
+
+            MT_FIELD(obj, InnerCl);
+        };
+
         void testHierarchy()
         {
-            MT_CLASS(InnerCl)
-            {
-            public:
-                InnerCl() = default;
-                InnerCl(int val)
-                    :val(val)
-                {}
-
-                bool operator==(const InnerCl &that) const
-                {
-                    return val == that.val;
-                }
-
-                MT_FIELD(val, int, MT_FIELD_ATTR_WEAK);
-            };
-            MT_CLASS(OuterCl)
-            {
-            public:
-                OuterCl() = default;
-                OuterCl(InnerCl obj)
-                    :obj(std::move(obj))
-                {}
-
-                bool operator==(const OuterCl &that) const
-                {
-                    return obj == that.obj;
-                }
-
-                MT_FIELD(obj, InnerCl);
-            };
             const OuterCl exp(InnerCl(42));
             OuterCl act{};
             auto s = toSerializer(act);

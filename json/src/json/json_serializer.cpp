@@ -24,8 +24,8 @@ namespace xserialization::json
                 assert(false);
                 break;
         }
-        JSONSerializer s(cur);
-        value.visit(s);
+        JSONSerializer serializer(cur);
+        value.visit(serializer);
     }
 
     void JSONSerializer::write(Null, const Context &context)

@@ -25,6 +25,14 @@ for the written types. `MT_FIELD_ATTR_OPTIONAL` allows the field to be missing.
 
 `MT_CLASS` will have `ISerializer` and `IDeserializer` available.
 
+## Note
+
+Due to an implementation limitation aggregate initialization of the serializable
+classes requires an additional empty base class initializer (see below).
+
+The current way of relying on dynamic maps during static initialization is not
+robust, exceptions cause aborts.
+
 ## Example
 
 ```
@@ -35,6 +43,11 @@ public:
     MT_FIELD(y, int, MT_FIELD_ATTR_WEAK);
     MT_FIELD(z, int, MT_FIELD_ATTR_WEAK, MT_FIELD_ATTR_OPTIONAL);
 };
+```
+
+Aggregate initialization:
+```
+const Point p{{}, 42, 43}; // the first "{}" is required
 ```
 
 # JSON

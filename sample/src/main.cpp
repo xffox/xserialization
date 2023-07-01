@@ -14,13 +14,6 @@ namespace
     MT_CLASS(Point)
     {
     public:
-        Point()
-            :x(0), y(0)
-        {}
-        Point(int x, int y)
-            :x(x), y(y)
-        {}
-
         Point &operator++()
         {
             ++x;
@@ -38,14 +31,8 @@ namespace
         MT_FIELD(y, int, MT_FIELD_ATTR_WEAK);
     };
 
-    MT_CLASS(Line)
+    MT_STRUCT(Line)
     {
-    public:
-        Line() = default;
-        Line(Point begin, Point end)
-            :begin(std::move(begin)), end(std::move(end))
-        {}
-
         MT_FIELD(begin, Point);
         MT_FIELD(end, Point);
     };
@@ -365,10 +352,10 @@ struct xserialization::SerializationTrait<Data>
 int main()
 {
     std::stringstream ostream;
-    const Point p(42, 43);
+    const Point p{{}, 42, 43};
     print(ostream, p);
     ostream<<std::endl;
-    Line l(Point(1, 2), Point(3, 4));
+    Line l{{}, Point{{}, 1, 2}, Point{{}, 3, 4}};
     print(ostream, l);
     ostream<<std::endl;
     const Vector v(generate<Vector::ValueType>(42, 10));

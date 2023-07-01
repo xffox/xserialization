@@ -1,6 +1,7 @@
 #ifndef XSERIALIZATION_INNER_METAOBJECTSERIALIZER_HPP
 #define XSERIALIZATION_INNER_METAOBJECTSERIALIZER_HPP
 
+#include <algorithm>
 #include <iterator>
 #include <string>
 #include <unordered_set>
@@ -10,17 +11,22 @@
 #include "xserialization/context.hpp"
 #include "xserialization/exception/serializer_exception.hpp"
 #include "xserialization/inner/meta_object.hpp"
+#include "xserialization/inner/attribute.hpp"
 
 namespace xserialization::inner
 {
+    template<typename T>
     class MetaObjectSerializer: public ISerializer
     {
     public:
-        explicit MetaObjectSerializer(MetaObject &object)
-            :object(object), unusedFields(prepareUnusedFields(object))
+        explicit MetaObjectSerializer(T &object)
+            :object(object), unusedFields(prepareUnusedFields())
         {}
 
-        Context::Type contextType() const override;
+        Context::Type contextType() const override
+        {
+            return Context::TYPE_NAME;
+        }
 
         void write(const IDeserializer &value, const Context &context) override
         { return writeValue(context, value); }
@@ -63,20 +69,40 @@ namespace xserialization::inner
         template<typename V>
         void writeValue(const Context &context, const V &value);
 
-        bool allFieldsUsed() const;
-        bool isOpenObject() const;
+        bool allFieldsUsed() const
+        {
+            return unusedFields.empty();
+        }
+        bool isOpenObject() const
+        {
+            return static_cast<bool>(MetaObjectTrait<T>::attributes() &
+                    static_cast<AttrMask>(ClassAttribute::OPEN));
+        }
 
     private:
-        static std::unordered_set<std::string> prepareUnusedFields(
-                const MetaObject &object);
+        static std::unordered_set<std::string> prepareUnusedFields()
+        {
+            std::unordered_set<std::string> result;
+            const auto& fields = MetaObjectTrait<T>::fields();
+            for(const auto &field : fields)
+            {
+                if(!static_cast<bool>(field.second->attributes() &
+                            static_cast<AttrMask>(FieldAttribute::OPTIONAL)))
+                {
+                    result.insert(field.first);
+                }
+            }
+            return result;
+        }
 
     private:
-        MetaObject &object;
+        T &object;
         std::unordered_set<std::string> unusedFields;
     };
 
+    template<typename T>
     template<typename V>
-    void MetaObjectSerializer::writeValue(const Context &context, const V &value)
+    void MetaObjectSerializer<T>::writeValue(const Context &context, const V &value)
     {
         if(context.getType() == Context::TYPE_NONE)
         {

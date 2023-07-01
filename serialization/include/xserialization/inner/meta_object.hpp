@@ -1,226 +1,83 @@
 #ifndef XSERIALIZATION_INNER_METAOBJECT_HPP
 #define XSERIALIZATION_INNER_METAOBJECT_HPP
 
-#include <string>
 #include <type_traits>
+#include <string>
 #include <unordered_map>
-#include <tuple>
+#include <cstdlib>
 #include <utility>
-#include <limits>
-#include <cassert>
 
-#include "xserialization/serializer.hpp"
-#include "xserialization/deserializer.hpp"
-#include "xserialization/context.hpp"
-#include "xserialization/typeutil.hpp"
-#include "xserialization/exception/serializer_exception.hpp"
-#include "xserialization/exception/deserializer_exception.hpp"
 #include "xserialization/inner/attribute.hpp"
+#include "xserialization/inner/meta_field.hpp"
 
 namespace xserialization::inner
 {
-    class IField;
-
-    class MetaObject
+    namespace object
     {
-    public:
-        using FieldMap = std::unordered_map<std::string, IField*>;
+        class MetaObject
+        {};
 
-    public:
-        virtual ~MetaObject() = 0;
+        template<class T, AttrMask classAttributes>
+        class MetaObjectBase: protected MetaObject
+        {
+        protected:
+            using CurClass = T;
+            using BaseClass = MetaObjectBase;
+            using FieldMap = std::unordered_map<std::string, field::IField<T>*>;
 
-        [[nodiscard]]
-        virtual const FieldMap &fields() const = 0;
-        [[nodiscard]]
-        virtual AttrMask attributes() const = 0;
-        [[nodiscard]]
-        virtual const std::string &className() const = 0;
-    };
+        public:
+            [[nodiscard]]
+            static const FieldMap &fields() noexcept
+            {
+                return MetaObjectBase::getFields();
+            }
 
-    class IField
-    {
-    public:
-        virtual ~IField() = 0;
+            [[nodiscard]]
+            static AttrMask attributes() noexcept
+            {
+                return classAttributes;
+            }
 
-        [[nodiscard]]
-        virtual AttrMask attributes() const = 0;
+        protected:
+            static bool addField(const std::string &name, field::IField<T> &field) noexcept
+            {
+                try
+                {
+                    return getFields().insert(std::make_pair(name, &field)).second;
+                }
+                catch(...)
+                {
+                    std::abort();
+                }
+            }
 
-        virtual void visit(ISerializer &serializer, const MetaObject &object) = 0;
+        private:
+            static FieldMap &getFields() noexcept
+            {
+                try
+                {
+                    static FieldMap fields;
+                    return fields;
+                }
+                catch(...)
+                {
+                    abort();
+                }
+            }
+        };
 
-        virtual bool write(MetaObject&, const IDeserializer&)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, bool)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, char)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, signed char)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, unsigned char)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, short)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, unsigned short)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, int)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, unsigned int)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, long)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, unsigned long)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, long long)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, unsigned long long)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, float)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, double)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, long double)
-        {
-            return false;
-        }
-        virtual bool write(MetaObject&, const std::string&)
-        {
-            return false;
-        }
-    };
-
-    namespace inner
-    {
+        template<typename T, typename = void>
+        struct MetaObjectTrait;
         template<typename T>
-        inline constexpr bool IsWeakConvertible =
-            (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>);
+        struct MetaObjectTrait<T,
+            std::enable_if_t<std::is_base_of_v<MetaObject, T>>>
+        {
+            using TYPE = T;
+        };
     }
 
-    template<typename Target, typename Cand, typename = void>
-    class BaseConvertedField: public virtual IField
-    {};
-
-    template<typename Target, typename Cand>
-    class BaseConvertedField<Target, Cand,
-          std::enable_if_t<
-              !std::is_same_v<Target, Cand> &&
-              inner::IsWeakConvertible<Target> && inner::IsWeakConvertible<Cand> &&
-              std::is_convertible_v<Cand, Target> &&
-              std::is_floating_point_v<Target> >= std::is_floating_point_v<Cand>>>:
-                  public virtual IField
-    {
-    public:
-        bool write(MetaObject &object, Cand value) override
-        {
-            bool valid = true;
-            if constexpr(std::is_signed_v<Target> == std::is_signed_v<Cand> ||
-                    std::is_floating_point_v<Target>)
-            {
-                valid = (value >= std::numeric_limits<Target>::lowest() &&
-                        value <= std::numeric_limits<Target>::max());
-            }
-            else if constexpr(std::is_unsigned_v<Target>)
-            {
-                valid = (value >= 0 &&
-                        static_cast<std::make_unsigned_t<Cand>>(value) <=
-                        std::numeric_limits<Target>::max());
-            }
-            else
-            {
-                valid = (value <= static_cast<std::make_unsigned_t<Target>>(
-                            std::numeric_limits<Target>::max()));
-            }
-            if(!valid)
-            {
-                return false;
-            }
-            return static_cast<IField&>(*this).write(object, static_cast<Target>(value));
-        }
-    };
-
-    template<typename Target, typename... Cands>
-    class TargetConvertedField: public BaseConvertedField<Target, Cands>...
-    {
-    public:
-        using IField::write;
-    };
-
-    template<typename Target>
-    struct PartialTargetConvertedField
-    {
-        template<typename... Cands>
-        using Type = TargetConvertedField<Target, Cands...>;
-    };
-
-    template<typename Target>
-    using WeakField =
-        typename typeutil::SerializationTrivialTypes<
-            PartialTargetConvertedField<Target>::template Type>::Type;
-
-    template<class T, AttrMask classAttributes>
-    class MetaObjectBase: public MetaObject
-    {
-    public:
-        ~MetaObjectBase() override = 0;
-
-        [[nodiscard]]
-        const FieldMap &fields() const override
-        {
-            return MetaObjectBase::getFields();
-        }
-
-        [[nodiscard]]
-        AttrMask attributes() const override
-        {
-            return classAttributes;
-        }
-
-    protected:
-        using BaseClass = T;
-
-    protected:
-        static FieldMap &getFields()
-        {
-            static FieldMap fields;
-            return fields;
-        }
-
-        static bool addField(const std::string &name, IField &field)
-        {
-            return getFields().insert(std::make_pair(name, &field)).second;
-        }
-    };
-
-    template<class T, AttrMask classAttributes>
-    MetaObjectBase<T, classAttributes>::~MetaObjectBase() = default;
+    template<typename T>
+    using MetaObjectTrait = typename object::MetaObjectTrait<T>::TYPE;
 }
 
 #endif

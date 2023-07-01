@@ -194,6 +194,29 @@ namespace xserialization::test
 
             MT_FIELD(value, int);
         };
+
+        MT_CLASS(WeakFieldClass)
+        {
+        public:
+            MT_FIELD(a, int, MT_FIELD_ATTR_WEAK);
+            MT_FIELD(b, int, MT_FIELD_ATTR_WEAK);
+        };
+
+        MT_CLASS(OpenClass, MT_CLASS_ATTR_OPEN)
+        {
+        public:
+            OpenClass() = default;
+            OpenClass(int a, int b)
+                :a(a), b(b)
+            {}
+            MT_FIELD(a, int, MT_FIELD_ATTR_WEAK);
+            MT_FIELD(b, int, MT_FIELD_ATTR_WEAK);
+
+            bool operator==(const OpenClass &that) const
+            {
+                return a == that.a && b == that.b;
+            }
+        };
     }
 
     class MetaObjectSerializerTest: public CppUnit::TestCase
@@ -370,7 +393,7 @@ namespace xserialization::test
 
         void testClassAllFields()
         {
-            const FieldCl exp(42, 43, 84, 101);
+            const FieldCl exp{42, 43, 84, 101};
             std::unordered_map<std::string, int> src{
                 {"a", exp.a},
                 {"b", exp.b},
@@ -411,13 +434,7 @@ namespace xserialization::test
 
         void testExtraFieldThrow()
         {
-            MT_CLASS(Cl)
-            {
-            public:
-                MT_FIELD(a, int, MT_FIELD_ATTR_WEAK);
-                MT_FIELD(b, int, MT_FIELD_ATTR_WEAK);
-            };
-            Cl act{};
+            WeakFieldClass act{};
             const std::unordered_map<std::string, int> src{
                 {"a", 42},
                 {"b", 888},
@@ -429,28 +446,13 @@ namespace xserialization::test
 
         void testOpenClassExtraField()
         {
-            MT_CLASS(Cl, MT_CLASS_ATTR_OPEN)
-            {
-            public:
-                Cl() = default;
-                Cl(int a, int b)
-                    :a(a), b(b)
-                {}
-                MT_FIELD(a, int, MT_FIELD_ATTR_WEAK);
-                MT_FIELD(b, int, MT_FIELD_ATTR_WEAK);
-
-                bool operator==(const Cl &that) const
-                {
-                    return a == that.a && b == that.b;
-                }
-            };
-            const Cl exp{42, 888};
+            const OpenClass exp{42, 888};
             const std::unordered_map<std::string, int> src{
                 {"a", 42},
                 {"b", 888},
                 {"c", 101},
-           };
-            Cl act{};
+            };
+            OpenClass act{};
             auto s = toSerializer(act);
             s<<src;
             CPPUNIT_ASSERT(exp == act);

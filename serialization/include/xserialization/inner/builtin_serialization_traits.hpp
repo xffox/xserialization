@@ -11,9 +11,9 @@
 
 template<typename T>
 struct xserialization::SerializationTrait<T,
-    std::enable_if_t<std::is_base_of_v<xserialization::inner::MetaObject, T>>>
+    std::void_t<xserialization::inner::MetaObjectTrait<T>>>
 {
-    using Serializer = xserialization::inner::MetaObjectSerializer;
+    using Serializer = xserialization::inner::MetaObjectSerializer<T>;
 
     static Serializer toSerializer(T &value)
     {
@@ -23,9 +23,9 @@ struct xserialization::SerializationTrait<T,
 
 template<typename T>
 struct xserialization::DeserializationTrait<T,
-    std::enable_if_t<std::is_base_of_v<xserialization::inner::MetaObject, T>>>
+    std::void_t<xserialization::inner::MetaObjectTrait<T>>>
 {
-    using Deserializer = xserialization::inner::MetaObjectDeserializer;
+    using Deserializer = xserialization::inner::MetaObjectDeserializer<T>;
 
     static Deserializer toDeserializer(const T &value)
     {

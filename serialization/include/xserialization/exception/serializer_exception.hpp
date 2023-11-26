@@ -32,6 +32,20 @@ namespace xserialization::exception
     private:
         Context context;
     };
+
+    class TypeSerializerException: public SerializerException
+    {
+    public:
+        explicit TypeSerializerException(const Context &context)
+            :SerializerException(context)
+        {}
+
+        template<typename T, typename =
+            std::enable_if_t<std::is_constructible_v<std::string, T>>>
+        TypeSerializerException(const Context &context, T &&msg)
+            :SerializerException(context, std::forward<T>(msg))
+        {}
+    };
 }
 
 #endif

@@ -9,32 +9,89 @@
 #include "xserialization/context.hpp"
 #include "xserialization/serializer.hpp"
 #include "xserialization/null.hpp"
-#include "xserialization/exception/serialization_exception.hpp"
+#include "xserialization/typeutil.hpp"
+#include "xserialization/valutil.hpp"
+#include "xserialization/exception/serializer_exception.hpp"
+#include "xserialization/exception/deserializer_exception.hpp"
 
 namespace xserialization::json
 {
     namespace
     {
+        template<typename Target, typename Src, typename F>
+        bool tryConsumeValue(const Src &val, F consume)
+        {
+            if(!valutil::canAssign<Target>(val))
+            {
+                return false;
+            }
+            try
+            {
+                consume(static_cast<Target>(val));
+                return true;
+            }
+            catch(const exception::TypeSerializerException&)
+            {
+                return false;
+            }
+        }
+
+        template<typename... Ts>
+        struct TypeConsumer
+        {
+            template<typename Src, typename F>
+            static bool tryConsume(const Src &val, F consume)
+            {
+                return (tryConsumeValue<Ts>(val, consume) || ...);
+            }
+        };
+
+        template<typename Src, typename F>
+        void consumeIntegerValue(const Src &val, F consume)
+        {
+            if(!(typeutil::SerializationUnsignedIntegerTypes<TypeConsumer>::Type::tryConsume(val, consume) ||
+                        typeutil::SerializationSignedIntegerTypes<TypeConsumer>::Type::tryConsume(val, consume) ||
+                        typeutil::SerializationFloatingPointTypes<TypeConsumer>::Type::tryConsume(val, consume)))
+            {
+                throw exception::DeserializerException("no matching type to write");
+            }
+        }
+
+        template<typename Src, typename F>
+        void consumeFloatingPointValue(const Src &val, F consume)
+        {
+            if(!typeutil::SerializationFloatingPointTypes<TypeConsumer>::Type::tryConsume(val, consume))
+            {
+                throw exception::DeserializerException("no matching type to write");
+            }
+        }
+
         template<typename F, typename E>
-        decltype(auto) tryConsumeValue(const nlohmann::json &value, F consume,
-                E invalid)
+        void consumeValue(const nlohmann::json &value, F consume, E invalid)
         {
             switch(value.type())
             {
             case nlohmann::json::value_t::boolean:
-                return consume(value.get<nlohmann::json::boolean_t>());
+                consume(value.get<nlohmann::json::boolean_t>());
+                break;
             case nlohmann::json::value_t::number_integer:
-                return consume(value.get<nlohmann::json::number_integer_t>());
+                consumeIntegerValue(value.get<nlohmann::json::number_integer_t>(), consume);
+                break;
             case nlohmann::json::value_t::number_unsigned:
-                return consume(value.get<nlohmann::json::number_unsigned_t>());
+                consumeIntegerValue(value.get<nlohmann::json::number_unsigned_t>(), consume);
+                break;
             case nlohmann::json::value_t::number_float:
-                return consume(value.get<nlohmann::json::number_float_t>());
+                consumeFloatingPointValue(value.get<nlohmann::json::number_float_t>(), consume);
+                break;
             case nlohmann::json::value_t::string:
-                return consume(value.get<nlohmann::json::string_t>());
+                consume(value.get<nlohmann::json::string_t>());
+                break;
             case nlohmann::json::value_t::null:
-                return consume(Null{});
+                consume(Null{});
+                break;
             default:
-                return invalid();
+                invalid();
+                break;
             }
         }
     }
@@ -43,7 +100,7 @@ namespace xserialization::json
     {
         auto writeValue =
             [&serializer](const nlohmann::json &value, const Context &context){
-                tryConsumeValue(value, [&serializer, &context](const auto &v){
+                consumeValue(value, [&serializer, &context](const auto &v){
                             serializer.write(v, context);
                         },
                         [&serializer, &context, &value](){

@@ -120,7 +120,7 @@ namespace xserialization::inner
                 }
                 else
                 {
-                    throw exception::SerializerException(context,
+                    throw exception::TypeSerializerException(context,
                             "invalid value");
                 }
             }
@@ -140,7 +140,7 @@ namespace xserialization::inner
         {
             if(!iter->second->write(object, value))
             {
-                throw exception::SerializerException(context, "invalid field write");
+                throw exception::TypeSerializerException(context, "invalid field write");
             }
             unusedFields.erase(context.getName());
         }

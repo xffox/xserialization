@@ -117,7 +117,7 @@ namespace xserialization::json::test
             WeakFieldClass act;
             auto &&serializer = toSerializer(act);
             CPPUNIT_ASSERT_THROW(serializer<<json::JSON("{\"val\": 42.43}"),
-                        exception::SerializerException);
+                        exception::DeserializerException);
         }
 
         MT_CLASS(FloatWeakFieldClass)

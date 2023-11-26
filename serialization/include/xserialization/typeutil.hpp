@@ -32,17 +32,41 @@ namespace xserialization::typeutil
                  std::is_base_of_v<IDeserializer, std::decay_t<T>>));
     };
 
+    template<typename... Args>
+    struct TypeList
+    {
+        template<typename... As>
+        using Append = TypeList<Args..., As...>;
+
+        template<template<typename...> class Container>
+        using Apply = Container<Args...>;
+    };
+
+    template<template<typename...> class Container>
+    struct SerializationSignedIntegerTypes
+    {
+        using Type = Container<signed char, short, int, long, long long>;
+    };
+    template<template<typename...> class Container>
+    struct SerializationUnsignedIntegerTypes
+    {
+        using Type = Container<unsigned char, unsigned short, unsigned int,
+              unsigned long, unsigned long long>;
+    };
+    template<template<typename...> class Container>
+    struct SerializationFloatingPointTypes
+    {
+        using Type = Container<float, double, long double>;
+    };
     template<template<typename...> class Container>
     struct SerializationTrivialTypes
     {
-        using Type = Container<bool,
-              char, signed char, unsigned char,
-              short, unsigned short,
-              int, unsigned int,
-              long, unsigned long,
-              long long, unsigned long long,
-              float, double, long double,
-              std::string>;
+        using Type =
+            SerializationSignedIntegerTypes<
+            SerializationUnsignedIntegerTypes<
+            SerializationFloatingPointTypes<
+                TypeList<bool, char, std::string>::Append>
+                ::Type::Append>::Type::Append>::Type::Apply<Container>;
     };
 
     template<typename T>

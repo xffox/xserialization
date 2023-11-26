@@ -3,12 +3,12 @@
 
 #include <type_traits>
 #include <string>
-#include <limits>
 
 #include "xserialization/serializer.hpp"
 #include "xserialization/deserializer.hpp"
 #include "xserialization/context.hpp"
 #include "xserialization/typeutil.hpp"
+#include "xserialization/valutil.hpp"
 #include "xserialization/inner/attribute.hpp"
 
 namespace xserialization::inner::field
@@ -120,25 +120,7 @@ namespace xserialization::inner::field
     public:
         bool write(Cl &object, Cand value) override
         {
-            bool valid = true;
-            if constexpr(std::is_signed_v<Target> == std::is_signed_v<Cand> ||
-                    std::is_floating_point_v<Target>)
-            {
-                valid = (value >= std::numeric_limits<Target>::lowest() &&
-                        value <= std::numeric_limits<Target>::max());
-            }
-            else if constexpr(std::is_unsigned_v<Target>)
-            {
-                valid = (value >= 0 &&
-                        static_cast<std::make_unsigned_t<Cand>>(value) <=
-                        std::numeric_limits<Target>::max());
-            }
-            else
-            {
-                valid = (value <= static_cast<std::make_unsigned_t<Target>>(
-                            std::numeric_limits<Target>::max()));
-            }
-            if(!valid)
+            if(!valutil::canAssign<Target>(value))
             {
                 return false;
             }

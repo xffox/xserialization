@@ -70,7 +70,7 @@ namespace xserialization::inner
             }
             else
             {
-                throw exception::SerializerException(context, "invalid value");
+                throw exception::TypeSerializerException(context, "invalid value");
             }
         }
         else if(context.getType() == Context::TYPE_INDEX)
@@ -81,7 +81,7 @@ namespace xserialization::inner
             }
             if(!util::writeValue(collection[context.getIndex()], value))
             {
-                throw exception::SerializerException(context, "invalid value");
+                throw exception::TypeSerializerException(context, "invalid value");
             }
         }
         else

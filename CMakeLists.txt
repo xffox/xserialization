@@ -19,6 +19,9 @@ if(UNIX)
 elseif(WIN32)
     add_compile_options("-DNOMINMAX")
 endif()
+if(MSVC)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
 
 set(XSERIALIZATION_INSTALL_CMAKE_DEST "${CMAKE_INSTALL_LIBDIR}/cmake/xserialization")
 

@@ -4,8 +4,6 @@
 #include <optional>
 #include <cassert>
 
-#include <nlohmann/json.hpp>
-
 #include "xserialization/context.hpp"
 #include "xserialization/serializer.hpp"
 #include "xserialization/null.hpp"
@@ -13,6 +11,7 @@
 #include "xserialization/valutil.hpp"
 #include "xserialization/exception/serializer_exception.hpp"
 #include "xserialization/exception/deserializer_exception.hpp"
+#include "inner/json_impl.hpp"
 
 namespace xserialization::json
 {
@@ -67,26 +66,26 @@ namespace xserialization::json
         }
 
         template<typename F, typename E>
-        void consumeValue(const nlohmann::json &value, F consume, E invalid)
+        void consumeValue(const inner::JSONImpl &value, F consume, E invalid)
         {
             switch(value.type())
             {
-            case nlohmann::json::value_t::boolean:
-                consume(value.get<nlohmann::json::boolean_t>());
+            case inner::JSONImpl::value_t::boolean:
+                consume(value.get<inner::JSONImpl::boolean_t>());
                 break;
-            case nlohmann::json::value_t::number_integer:
-                consumeIntegerValue(value.get<nlohmann::json::number_integer_t>(), consume);
+            case inner::JSONImpl::value_t::number_integer:
+                consumeIntegerValue(value.get<inner::JSONImpl::number_integer_t>(), consume);
                 break;
-            case nlohmann::json::value_t::number_unsigned:
-                consumeIntegerValue(value.get<nlohmann::json::number_unsigned_t>(), consume);
+            case inner::JSONImpl::value_t::number_unsigned:
+                consumeIntegerValue(value.get<inner::JSONImpl::number_unsigned_t>(), consume);
                 break;
-            case nlohmann::json::value_t::number_float:
-                consumeFloatingPointValue(value.get<nlohmann::json::number_float_t>(), consume);
+            case inner::JSONImpl::value_t::number_float:
+                consumeFloatingPointValue(value.get<inner::JSONImpl::number_float_t>(), consume);
                 break;
-            case nlohmann::json::value_t::string:
-                consume(value.get<nlohmann::json::string_t>());
+            case inner::JSONImpl::value_t::string:
+                consume(value.get<inner::JSONImpl::string_t>());
                 break;
-            case nlohmann::json::value_t::null:
+            case inner::JSONImpl::value_t::null:
                 consume(Null{});
                 break;
             default:
@@ -99,14 +98,17 @@ namespace xserialization::json
     void JSONDeserializer::visit(ISerializer &serializer) const
     {
         auto writeValue =
-            [&serializer](const nlohmann::json &value, const Context &context){
+            [&serializer](const inner::JSONImpl &value, const Context &context){
                 consumeValue(value, [&serializer, &context](const auto &v){
                             serializer.write(v, context);
                         },
                         [&serializer, &context, &value](){
-                            serializer.write(JSONDeserializer(value), context);
+                            serializer.write(
+                                    JSONDeserializer(inner::toJSONOpaque(value)),
+                                    context);
                         });
         };
+        const auto &value = inner::toJSONImpl(json);
         switch(contextType())
         {
         case Context::TYPE_NAME:

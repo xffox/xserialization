@@ -1,23 +1,20 @@
 #ifndef XSERIALIZATION_JSON_JSONDESERIALIZER_HPP
 #define XSERIALIZATION_JSON_JSONDESERIALIZER_HPP
 
-#include <nlohmann/json.hpp>
-
-#include <xserialization/deserializer.hpp>
-#include "xserialization/json/json_base.hpp"
+#include "xserialization/deserializer.hpp"
+#include "xserialization/json/inner/json_base.hpp"
+#include "xserialization/json/inner/opaque_json.hpp"
 
 namespace xserialization::json
 {
-    class JSONDeserializer: public JSONBase<const nlohmann::json, IDeserializer>
+    class JSONDeserializer:
+        public inner::JSONBase<const inner::OpaqueJSON, IDeserializer>
     {
         friend class JSON;
     public:
-        void visit(ISerializer &serializer) const override;
+        using JSONBase::JSONBase;
 
-    private:
-        explicit JSONDeserializer(const nlohmann::json &value)
-            :JSONBase(value)
-        {}
+        void visit(ISerializer &serializer) const override;
     };
 }
 

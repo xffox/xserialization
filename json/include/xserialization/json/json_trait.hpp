@@ -1,8 +1,7 @@
 #ifndef XSERIALIZATION_JSON_JSONTRAIT_HPP
 #define XSERIALIZATION_JSON_JSONTRAIT_HPP
 
-#include <xserialization/serialization_trait.hpp>
-
+#include "xserialization/serialization_trait.hpp"
 #include "xserialization/json/json.hpp"
 #include "xserialization/json/json_serializer.hpp"
 #include "xserialization/json/json_deserializer.hpp"

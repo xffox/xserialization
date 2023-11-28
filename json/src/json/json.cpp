@@ -2,23 +2,21 @@
 
 #include <string>
 
-#include <nlohmann/json.hpp>
-
-#include <xserialization/exception/serializer_exception.hpp>
-
+#include "xserialization/exception/serializer_exception.hpp"
 #include "json/util.hpp"
+#include "inner/json_impl.hpp"
 
 namespace xserialization::json
 {
     namespace
     {
-        nlohmann::json parse(const std::string &str)
+        inner::JSONImpl parse(const std::string &str)
         {
             try
             {
-                return nlohmann::json::parse(str);
+                return inner::JSONImpl::parse(str);
             }
-            catch(const nlohmann::json::exception &exc)
+            catch(const inner::JSONImpl::exception &exc)
             {
                 throw exception::SerializerException(Context(),
                         exc.what());
@@ -28,7 +26,7 @@ namespace xserialization::json
 
     struct JSON::Value
     {
-        nlohmann::json value;
+        inner::JSONImpl value;
     };
 
     JSON::JSON()
@@ -62,11 +60,13 @@ namespace xserialization::json
 
     JSONSerializer JSON::serializer()
     {
-        return JSONSerializer{util::assertHasValue(value)->value};
+        return JSONSerializer{
+            inner::toJSONOpaque(util::assertHasValue(value)->value)};
     }
 
     JSONDeserializer JSON::deserializer() const
     {
-        return JSONDeserializer{util::assertHasValue(value)->value};
+        return JSONDeserializer{
+            inner::toJSONOpaque(util::assertHasValue(value)->value)};
     }
 }

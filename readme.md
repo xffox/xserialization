@@ -54,8 +54,7 @@ const Point p{{}, 42, 43}; // the first "{}" is required
 
 `json::JSON` class has `ISerializer` and `IDeserializer` implementations. JSON
 serialization depends on the nlohmann JSON library. Enabled with the `USE_JSON`
-CMake switch. And `find_package(nlohmann_json REQUIRED)` is required for this
-to work.
+CMake switch.
 
 Usage:
 ```

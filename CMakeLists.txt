@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 project(xserialization)
 
@@ -20,16 +20,18 @@ elseif(WIN32)
     add_compile_options("-DNOMINMAX")
 endif()
 
+set(XSERIALIZATION_INSTALL_CMAKE_DEST "${CMAKE_INSTALL_LIBDIR}/cmake/xserialization")
+
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
     "${CMAKE_CURRENT_BINARY_DIR}/XSerializationConfig.cmake"
-    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/XSerialization")
+    INSTALL_DESTINATION "${XSERIALIZATION_INSTALL_CMAKE_DEST}")
 
 install(EXPORT XSerializationTargets NAMESPACE xserialization::
-    FILE "XSerializationConfig.cmake"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/XSerialization")
+    FILE "XSerializationTargets.cmake"
+    DESTINATION "${XSERIALIZATION_INSTALL_CMAKE_DEST}")
 install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/XSerializationConfig.cmake"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/XSerialization")
+    DESTINATION "${XSERIALIZATION_INSTALL_CMAKE_DEST}")
 
 add_subdirectory(serialization)
 if(USE_JSON)

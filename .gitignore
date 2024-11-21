@@ -1,4 +1,4 @@
-build*/
+/_build*
 GeneratedFiles/
 ipch/
 *.sdf

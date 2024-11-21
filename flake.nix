@@ -13,16 +13,14 @@
     in {
       packages = {
         default = targetPkg {};
+        defaultWithSample = targetPkg { enableSample = true; };
         withoutJSON = targetPkg { useJSON = false; };
         buildClang = targetPkg { stdenv = pkgs.clangStdenv; };
+        buildStatic = targetPkg { stdenv = pkgs.pkgsStatic.stdenv; buildSharedLibs = false; };
+        buildStaticWithSample = targetPkg { stdenv = pkgs.pkgsStatic.stdenv; buildSharedLibs = false; enableSample = true; };
       };
       devShells = {
-        default = pkgs.mkShell {
-          packages = [
-            pkgs.clang-tools
-          ];
-          inputsFrom = [self.packages.${system}.default];
-        };
+        default = pkgs.callPackage ./nix/shell.nix { xserialization = self.packages.${system}.default; };
       };
     });
 }

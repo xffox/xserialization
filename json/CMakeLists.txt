@@ -9,7 +9,7 @@ set(XSERIALIZATION_JSON_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 find_package(nlohmann_json REQUIRED)
 
-add_library(${XSERIALIZATION_JSON} SHARED ${XSERIALIZATION_JSON_SRCS})
+add_library(${XSERIALIZATION_JSON} ${XSERIALIZATION_JSON_SRCS})
 target_link_libraries(${XSERIALIZATION_JSON}
     PUBLIC ${XSERIALIZATION}
     PRIVATE nlohmann_json::nlohmann_json)

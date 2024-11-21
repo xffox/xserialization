@@ -1,0 +1,64 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "base",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "USE_JSON": "on"
+      }
+    },
+    {
+      "name": "debug",
+      "inherits": "base",
+      "binaryDir": "_build_debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "debug"
+      }
+    },
+    {
+      "name": "release",
+      "inherits": "base",
+      "binaryDir": "_build_release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "release"
+      }
+    },
+    {
+      "name": "release-lint",
+      "inherits": "release",
+      "binaryDir": "_build_release_lint",
+      "cacheVariables": {
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "release-lint",
+      "configurePreset": "release-lint"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "release-lint",
+      "configurePreset": "release-lint"
+    }
+  ]
+}

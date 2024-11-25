@@ -57,7 +57,7 @@ namespace xserialization::util
     bool writeValue(R &dst, const T &src,
             std::enable_if_t<!typeutil::IsSerializationTrivial<R>::value, int>)
     {
-        SerializationTrait<R>::toSerializer(dst).write(src,
+        static_cast<ISerializer&&>(SerializationTrait<R>::toSerializer(dst)).write(src,
                 xserialization::Context());
         return true;
     }

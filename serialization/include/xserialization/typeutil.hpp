@@ -10,28 +10,6 @@
 
 namespace xserialization::typeutil
 {
-    template<typename T, typename = void>
-    struct IsSerializationWriteable
-    {
-        static constexpr bool value = false;
-    };
-    template<typename T>
-    struct IsSerializationWriteable<T,
-        std::void_t<decltype(std::declval<ISerializer>().write(
-                    std::declval<T>(), std::declval<Context>()))>>
-    {
-        static constexpr bool value = true;
-    };
-
-    template<typename T>
-    struct IsSerializationTrivial
-    {
-        static constexpr bool value =
-            (IsSerializationWriteable<T>::value &&
-             !(std::is_same_v<std::decay_t<T>, Null> ||
-                 std::is_base_of_v<IDeserializer, std::decay_t<T>>));
-    };
-
     template<typename... Args>
     struct TypeList
     {
@@ -70,13 +48,23 @@ namespace xserialization::typeutil
     };
 
     template<typename T>
+    class IsSerializationTrivial
+    {
+        template<typename... Args>
+        struct EqType
+        {
+            static constexpr bool value = (std::is_same_v<T, Args> || ...);
+        };
+    public:
+        static constexpr bool value = SerializationTrivialTypes<EqType>::Type::value;
+    };
+
+    template<typename T>
     using WriteType =
-        std::conditional_t<IsSerializationWriteable<T>::value,
+        std::conditional_t<(IsSerializationTrivial<T>::value ||
+                std::is_same_v<std::decay_t<T>, Null>),
             std::conditional_t<std::is_trivial_v<std::decay_t<T>> ||
-                    std::is_same_v<std::decay_t<T>, Null>, T,
-                std::conditional_t<
-                        std::is_base_of_v<IDeserializer, std::decay_t<T>>,
-                            const IDeserializer&, const T&>>,
+                    std::is_same_v<std::decay_t<T>, Null>, T, const T&>,
             const IDeserializer&>;
 }
 

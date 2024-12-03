@@ -130,33 +130,6 @@ namespace xserialization::test
         VALUE(Double, double);
         VALUE(LongDouble, long double);
         VALUE(String, std::string);
-
-        MT_TEMPLATE_STRUCT(TemplateObject,  T)
-        {
-            MT_FIELD_IN(TemplateObject, fst, T);
-            MT_FIELD_IN(TemplateObject, snd, int);
-
-            friend bool operator==(const TemplateObject<T> &left,
-                    const TemplateObject<T> &right)
-            {
-                return left.fst == right.fst && left.snd == right.snd;
-            }
-        };
-
-        template<typename T>
-        struct TemplateNestedObject
-        {
-            MT_STRUCT(Object)
-            {
-                MT_FIELD_IN(Object, fst, T);
-                MT_FIELD_IN(Object, snd, int);
-
-                friend bool operator==(const Object &left, const Object &right)
-                {
-                    return left.fst == right.fst && left.snd == right.snd;
-                }
-            };
-        };
     }
 
     namespace
@@ -244,6 +217,43 @@ namespace xserialization::test
                 return a == that.a && b == that.b;
             }
         };
+
+        MT_STRUCT(StringFieldStruct)
+        {
+            MT_FIELD(val, std::string);
+
+            friend bool operator==(const StringFieldStruct &left, const StringFieldStruct &right)
+            {
+                return left.val == right.val;
+            }
+        };
+
+        MT_TEMPLATE_STRUCT(TemplateObject,  T)
+        {
+            MT_FIELD_IN(TemplateObject, fst, T);
+            MT_FIELD_IN(TemplateObject, snd, int);
+
+            friend bool operator==(const TemplateObject<T> &left,
+                    const TemplateObject<T> &right)
+            {
+                return left.fst == right.fst && left.snd == right.snd;
+            }
+        };
+
+        template<typename T>
+        struct TemplateNestedObject
+        {
+            MT_STRUCT(Object)
+            {
+                MT_FIELD_IN(Object, fst, T);
+                MT_FIELD_IN(Object, snd, int);
+
+                friend bool operator==(const Object &left, const Object &right)
+                {
+                    return left.fst == right.fst && left.snd == right.snd;
+                }
+            };
+        };
     }
 
     class MetaObjectSerializerTest: public CppUnit::TestCase
@@ -272,6 +282,7 @@ namespace xserialization::test
         CPPUNIT_TEST(testOpenClassExtraField);
         CPPUNIT_TEST(testTemplateObject);
         CPPUNIT_TEST(testTemplateNestedObject);
+        CPPUNIT_TEST(testStringField);
         CPPUNIT_TEST_SUITE_END();
     public:
         void testSerializePlain()
@@ -510,6 +521,19 @@ namespace xserialization::test
                 {"snd", 101},
             };
             TargetType act{};
+            auto serializer = toSerializer(act);
+            serializer<<src;
+            CPPUNIT_ASSERT(exp == act);
+        }
+
+        void testStringField()
+        {
+            const std::string value{"Tsathoggua"};
+            const StringFieldStruct exp{{}, value};
+            const std::unordered_map<std::string, std::string> src{
+                {"val", value},
+            };
+            StringFieldStruct act{};
             auto serializer = toSerializer(act);
             serializer<<src;
             CPPUNIT_ASSERT(exp == act);

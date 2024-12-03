@@ -104,7 +104,7 @@ namespace xserialization
         }
 
     private:
-        static exception::SerializerException prepareInvalidValueException(
+        static exception::TypeSerializerException prepareInvalidValueException(
                 const Context &context)
         {
             return {context, "invalid value"};

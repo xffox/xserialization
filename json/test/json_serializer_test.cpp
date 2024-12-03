@@ -21,6 +21,7 @@ namespace xserialization::json::test
         CPPUNIT_TEST_SUITE(JSONSerializerTest);
         CPPUNIT_TEST(testEmpty);
         CPPUNIT_TEST(testHierarchy);
+        CPPUNIT_TEST(testAtom);
         CPPUNIT_TEST_SUITE_END();
     public:
         void testEmpty()
@@ -68,6 +69,18 @@ namespace xserialization::json::test
             const OuterCl src(InnerCl(42));
             std::stringstream ss;
             ss<<"{\"obj\":{\"val\":"<<src.obj.val<<"}}";
+            const auto exp = std::move(ss).str();
+            JSON json;
+            auto s = toSerializer(json);
+            s<<src;
+            CPPUNIT_ASSERT_EQUAL(exp, static_cast<std::string>(json));
+        }
+
+        void testAtom()
+        {
+            const int src = 43;
+            std::stringstream ss;
+            ss<<std::to_string(src);
             const auto exp = std::move(ss).str();
             JSON json;
             auto s = toSerializer(json);

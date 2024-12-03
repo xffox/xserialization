@@ -43,6 +43,7 @@ namespace xserialization::json::test
         CPPUNIT_TEST(testMissingFieldsDefault);
         CPPUNIT_TEST(testFloatToIntegerThrow);
         CPPUNIT_TEST(testHierarchy);
+        CPPUNIT_TEST(testAtom);
         CPPUNIT_TEST_SUITE_END();
     public:
         void testExactFields()
@@ -188,6 +189,17 @@ namespace xserialization::json::test
             ss<<"{\"obj\": {\"val\": "<<exp.obj.val<<"}}";
             s<<JSON(ss.str());
             CPPUNIT_ASSERT(act == exp);
+        }
+
+        void testAtom()
+        {
+            const int exp = 42;
+            int act{};
+            auto s = toSerializer(act);
+            std::stringstream ss;
+            ss<<std::to_string(exp);
+            s<<JSON(ss.str());
+            CPPUNIT_ASSERT_EQUAL(act, exp);
         }
     };
     CPPUNIT_TEST_SUITE_REGISTRATION(JSONDeserializerTest);

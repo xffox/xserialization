@@ -1,6 +1,8 @@
 #ifndef XSERIALIZATION_INNER_COLLECTIONSERIALIZER_HPP
 #define XSERIALIZATION_INNER_COLLECTIONSERIALIZER_HPP
 
+#include <type_traits>
+
 #include "xserialization/base_serializer.hpp"
 #include "xserialization/context.hpp"
 #include "xserialization/typeutil.hpp"
@@ -37,6 +39,10 @@ namespace xserialization::inner
 
         template<typename T>
         void writeValue(const T &value, const Context &context);
+
+        // handle proxy reference case
+        template<typename R, typename T>
+        static bool assignCollectionValue(R &&ref, const T &value);
 
     private:
         Collection &collection;
@@ -79,7 +85,7 @@ namespace xserialization::inner
             {
                 collection.resize(context.getIndex() + 1);
             }
-            if(!util::writeValue(collection[context.getIndex()], value))
+            if(!assignCollectionValue(collection[context.getIndex()], value))
             {
                 throw exception::TypeSerializerException(context, "invalid value");
             }
@@ -87,6 +93,28 @@ namespace xserialization::inner
         else
         {
             throw exception::SerializerException(context, "invalid context type");
+        }
+    }
+
+    template<typename Collection>
+    template<typename R, typename T>
+    bool CollectionSerializer<Collection>::assignCollectionValue(R &&ref, const T &value)
+    {
+        // TODO: improve this implementation
+        if constexpr(std::is_same_v<std::decay_t<R>, typename Collection::value_type>)
+        {
+            return util::writeValue(ref, value);
+        }
+        else
+        {
+            typename Collection::value_type tmp{};
+            const auto res = util::writeValue(tmp, value);
+            if(!res)
+            {
+                return res;
+            }
+            ref = tmp;
+            return res;
         }
     }
 }

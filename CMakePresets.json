@@ -5,7 +5,8 @@
       "name": "base",
       "generator": "Ninja",
       "cacheVariables": {
-        "USE_JSON": "on"
+        "USE_JSON": "on",
+        "ENABLE_SAMPLE": "on"
       }
     },
     {

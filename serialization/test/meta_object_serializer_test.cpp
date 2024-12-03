@@ -130,6 +130,33 @@ namespace xserialization::test
         VALUE(Double, double);
         VALUE(LongDouble, long double);
         VALUE(String, std::string);
+
+        MT_TEMPLATE_STRUCT(TemplateObject,  T)
+        {
+            MT_FIELD_IN(TemplateObject, fst, T);
+            MT_FIELD_IN(TemplateObject, snd, int);
+
+            friend bool operator==(const TemplateObject<T> &left,
+                    const TemplateObject<T> &right)
+            {
+                return left.fst == right.fst && left.snd == right.snd;
+            }
+        };
+
+        template<typename T>
+        struct TemplateNestedObject
+        {
+            MT_STRUCT(Object)
+            {
+                MT_FIELD_IN(Object, fst, T);
+                MT_FIELD_IN(Object, snd, int);
+
+                friend bool operator==(const Object &left, const Object &right)
+                {
+                    return left.fst == right.fst && left.snd == right.snd;
+                }
+            };
+        };
     }
 
     namespace
@@ -243,6 +270,8 @@ namespace xserialization::test
         CPPUNIT_TEST(testWeakClassMissingFields);
         CPPUNIT_TEST(testExtraFieldThrow);
         CPPUNIT_TEST(testOpenClassExtraField);
+        CPPUNIT_TEST(testTemplateObject);
+        CPPUNIT_TEST(testTemplateNestedObject);
         CPPUNIT_TEST_SUITE_END();
     public:
         void testSerializePlain()
@@ -455,6 +484,34 @@ namespace xserialization::test
             OpenClass act{};
             auto s = toSerializer(act);
             s<<src;
+            CPPUNIT_ASSERT(exp == act);
+        }
+
+        void testTemplateObject()
+        {
+            using TargetType = TemplateObject<int>;
+            const TargetType exp{{}, 88, 13};
+            const std::unordered_map<std::string, int> src{
+                {"snd", 13},
+                {"fst", 88},
+            };
+            TargetType act{};
+            auto serializer = toSerializer(act);
+            serializer<<src;
+            CPPUNIT_ASSERT(exp == act);
+        }
+
+        void testTemplateNestedObject()
+        {
+            using TargetType = TemplateNestedObject<int>::Object;
+            const TargetType exp{{}, 17, 101};
+            const std::unordered_map<std::string, int> src{
+                {"fst", 17},
+                {"snd", 101},
+            };
+            TargetType act{};
+            auto serializer = toSerializer(act);
+            serializer<<src;
             CPPUNIT_ASSERT(exp == act);
         }
 

@@ -77,23 +77,23 @@ inline constexpr auto MT_FIELD_ATTR_OPTIONAL =
 inline constexpr auto MT_CLASS_ATTR_OPEN =
     xserialization::inner::ClassAttribute::OPEN;
 
-#define MT_FIELD(name, ...) \
-    static inline const struct _##name##FieldInitializerType: protected xserialization::inner::FieldBase<CurClass, __VA_ARGS__> \
+#define MT_INNER_FIELD(name, curclass, ...) \
+    static inline const struct _##name##FieldInitializerType: protected xserialization::inner::FieldBase<curclass, __VA_ARGS__> \
     { \
-        using xserialization::inner::FieldBase<CurClass, __VA_ARGS__>::write; \
+        using xserialization::inner::FieldBase<curclass, __VA_ARGS__>::write; \
         _##name##FieldInitializerType() noexcept \
         { \
-            [[maybe_unused]] const auto res = CurClass::addField(#name, *this); \
+            [[maybe_unused]] const auto res = curclass::addField(#name, *this); \
             assert(res); \
         } \
         void visit(xserialization::ISerializer &serializer, \
-            const CurClass &cur) override final \
+            const curclass &cur) override final \
         { \
             const auto &value = cur.name; \
             const xserialization::Context context(#name); \
             xserialization::util::visitValue(serializer, value, context); \
         } \
-        bool write(CurClass &cur, \
+        bool write(curclass &cur, \
                 xserialization::typeutil::WriteType< \
                     xserialization::inner::FieldType<__VA_ARGS__>> value) override final \
         { \
@@ -104,16 +104,24 @@ inline constexpr auto MT_CLASS_ATTR_OPEN =
             return xserialization::inner::fieldAttributesMaskFromTail<__VA_ARGS__>(); \
         } \
     } _##name##FieldInitializer; \
-    xserialization::inner::FieldType<__VA_ARGS__> name
+    std::enable_if_t<&_##name##FieldInitializer != nullptr, xserialization::inner::FieldType<__VA_ARGS__>> name
+
+#define MT_FIELD(name, ...) MT_INNER_FIELD(name, CurClass, __VA_ARGS__)
+
+// For templated types current rules require specifying the current class
+// explicitly when declaring fields.
+#define MT_FIELD_IN(curclass, name, ...) MT_INNER_FIELD(name, curclass, __VA_ARGS__)
 
 #define MT_INNER_CLASS(kind, cl, ...) \
     kind cl; \
     class _##cl##ClassBase: public xserialization::inner::object::MetaObjectBase<cl, \
         xserialization::inner::classAttributesMaskFromInit<__VA_ARGS__>()> \
     { \
+    protected: \
+        using MetaObjectBase = xserialization::inner::object::MetaObjectBase<cl, xserialization::inner::classAttributesMaskFromInit<__VA_ARGS__>()>; \
     public: \
-        using BaseClass::attributes; \
-        using BaseClass::fields; \
+        using MetaObjectBase::BaseClass::attributes; \
+        using MetaObjectBase::BaseClass::fields; \
         const std::string &className() const \
         { \
             static const std::string name(#cl); \
@@ -122,7 +130,31 @@ inline constexpr auto MT_CLASS_ATTR_OPEN =
     }; \
     kind cl: public _##cl##ClassBase
 
+#define MT_INNER_TEMPLATE_CLASS(kind, cl, typearg, ...) \
+    template<typename typearg> \
+    kind cl; \
+    template<typename typearg> \
+    class _##cl##ClassBase: public xserialization::inner::object::MetaObjectBase<cl<typearg>, \
+        xserialization::inner::classAttributesMaskFromInit<__VA_ARGS__>()> \
+    { \
+    protected: \
+        using MetaObjectBase = xserialization::inner::object::MetaObjectBase<cl<typearg>, xserialization::inner::classAttributesMaskFromInit<__VA_ARGS__>()>; \
+    public: \
+        using MetaObjectBase::BaseClass::attributes; \
+        using MetaObjectBase::BaseClass::fields; \
+        const std::string &className() const \
+        { \
+            static const std::string name(#cl); \
+            return name; \
+        } \
+    }; \
+    template<typename typearg> \
+    kind cl: public _##cl##ClassBase<typearg>
+
 #define MT_CLASS(...) MT_INNER_CLASS(class, __VA_ARGS__, 0)
 #define MT_STRUCT(...) MT_INNER_CLASS(struct, __VA_ARGS__, 0)
+
+#define MT_TEMPLATE_CLASS(...) MT_INNER_TEMPLATE_CLASS(class, __VA_ARGS__, 0)
+#define MT_TEMPLATE_STRUCT(...) MT_INNER_TEMPLATE_CLASS(struct, __VA_ARGS__, 0)
 
 #endif

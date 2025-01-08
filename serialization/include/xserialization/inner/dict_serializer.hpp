@@ -23,6 +23,8 @@ namespace xserialization::inner
             return Context::TYPE_NAME;
         }
 
+        using BaseSerializer::write;
+
         void write(
                 typeutil::WriteType<typename Dict::mapped_type> value,
                 const Context &context) override

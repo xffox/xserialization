@@ -4,8 +4,10 @@
 #include <algorithm>
 #include <iterator>
 #include <string>
+#include <sstream>
 #include <unordered_set>
 #include <type_traits>
+#include <utility>
 
 #include "xserialization/serializer.hpp"
 #include "xserialization/context.hpp"
@@ -69,9 +71,9 @@ namespace xserialization::inner
         template<typename V>
         void writeValue(const Context &context, const V &value);
 
-        bool allFieldsUsed() const
+        const auto &getUnusedFields() const
         {
-            return unusedFields.empty();
+            return unusedFields;
         }
         bool isOpenObject() const
         {
@@ -112,10 +114,25 @@ namespace xserialization::inner
                 {
                     MetaObjectSerializer s(object);
                     value.visit(s);
-                    if(!s.allFieldsUsed())
+                    if(!s.getUnusedFields().empty())
                     {
+                        std::stringstream errorStream;
+                        errorStream<<"missing fields: ";
+                        bool first = true;
+                        for(const auto &field : s.getUnusedFields())
+                        {
+                            if(!first)
+                            {
+                                errorStream<<',';
+                            }
+                            else
+                            {
+                                first = false;
+                            }
+                            errorStream<<"'"<<field<<"'";
+                        }
                         throw exception::SerializerException(context,
-                                "missing fields");
+                                std::move(errorStream).str());
                     }
                 }
                 else
@@ -148,7 +165,10 @@ namespace xserialization::inner
         {
             if(!isOpenObject())
             {
-                throw exception::SerializerException(context, "unknown field");
+                std::stringstream errorStream;
+                errorStream<<"unknown field: '"<<context.getName()<<"'";
+                throw exception::SerializerException(context,
+                        std::move(errorStream).str());
             }
         }
     }

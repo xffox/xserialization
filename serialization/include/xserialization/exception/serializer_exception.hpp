@@ -2,8 +2,7 @@
 #define XSERIALIZATION_EXCEPTION_SERIALIZEREXCEPTION_HPP
 
 #include <string>
-#include <type_traits>
-#include <utility>
+#include <string_view>
 
 #include "xserialization/context.hpp"
 #include "xserialization/exception/serialization_exception.hpp"
@@ -14,13 +13,12 @@ namespace xserialization::exception
     {
     public:
         explicit SerializerException(const Context &context)
-            :context(context)
+            :SerializationException(prepareContextedMessage(context, {}))
         {}
 
-        template<typename T, typename =
-            std::enable_if_t<std::is_constructible_v<std::string, T>>>
-        SerializerException(const Context &context, T &&msg)
-            :SerializationException(std::forward<T>(msg)), context(context)
+        SerializerException(const Context &context, std::string_view msg)
+            :SerializationException(prepareContextedMessage(context, msg)),
+            context(context)
         {}
 
         [[nodiscard]]
@@ -30,6 +28,9 @@ namespace xserialization::exception
         }
 
     private:
+        static std::string prepareContextedMessage(const Context &context,
+                std::string_view msg);
+
         Context context;
     };
 
@@ -40,10 +41,8 @@ namespace xserialization::exception
             :SerializerException(context)
         {}
 
-        template<typename T, typename =
-            std::enable_if_t<std::is_constructible_v<std::string, T>>>
-        TypeSerializerException(const Context &context, T &&msg)
-            :SerializerException(context, std::forward<T>(msg))
+        TypeSerializerException(const Context &context, std::string_view msg)
+            :SerializerException(context, msg)
         {}
     };
 }

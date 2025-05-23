@@ -24,29 +24,29 @@ namespace xserialization::inner::context_history
             return state;
         }
 
-    public:
-        class Handle
+        class ContextHistoryHandle
         {
             friend ContextHistory;
         public:
-            Handle(const Handle&) = delete;
-            Handle(Handle&&) = delete;
-            Handle &operator=(const Handle&) = delete;
-            Handle &operator=(Handle&&) = delete;
+            ContextHistoryHandle(const ContextHistoryHandle&) = delete;
+            ContextHistoryHandle(ContextHistoryHandle&&) = delete;
+            ContextHistoryHandle &operator=(const ContextHistoryHandle&) = delete;
+            ContextHistoryHandle &operator=(ContextHistoryHandle&&) = delete;
 
-            ~Handle()
+            ~ContextHistoryHandle()
             {
                 state().contexts.pop_back();
             }
 
         private:
-            Handle() = default;
+            ContextHistoryHandle() = default;
         };
 
-        static Handle push(Context context)
+    public:
+        static ContextHistoryHandle push(Context context)
         {
             state().contexts.push_back(std::move(context));
-            return Handle();
+            return ContextHistoryHandle();
         }
 
         static std::vector<Context> history()

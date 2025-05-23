@@ -7,6 +7,7 @@
 #include "xserialization/serializer.hpp"
 #include "xserialization/context.hpp"
 #include "xserialization/typeutil.hpp"
+#include "xserialization/inner/context_history.hpp"
 
 namespace xserialization::util
 {
@@ -57,8 +58,9 @@ namespace xserialization::util
     bool writeValue(R &dst, const T &src,
             std::enable_if_t<!typeutil::IsSerializationTrivial<R>::value, int>)
     {
-        static_cast<ISerializer&&>(SerializationTrait<R>::toSerializer(dst)).write(src,
-                xserialization::Context());
+        auto &&serializer = SerializationTrait<R>::toSerializer(dst);
+        inner::context_history::ContextSpySerializer(serializer).write(
+            src, xserialization::Context());
         return true;
     }
 

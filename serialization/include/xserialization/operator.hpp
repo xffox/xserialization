@@ -6,6 +6,7 @@
 #include "xserialization/context.hpp"
 #include "xserialization/serializer.hpp"
 #include "xserialization/deserializer.hpp"
+#include "xserialization/inner/context_history.hpp"
 
 namespace xserialization
 {
@@ -47,7 +48,8 @@ namespace xserialization
         const std::tuple<T, Context> &contextedObject)
     {
         const auto &[object, context] = contextedObject;
-        serializer.write(toDeserializer(object), context);
+        inner::context_history::ContextSpySerializer(serializer).write(
+            toDeserializer(object), context);
     }
 
     template<typename T>
@@ -59,7 +61,9 @@ namespace xserialization
     template<typename T>
     void operator>>(const IDeserializer &deserializer, T &object)
     {
-        toSerializer(object).write(deserializer, Context());
+        auto serializer = toSerializer(object);
+        inner::context_history::ContextSpySerializer(serializer).write(
+            deserializer, Context());
     }
 }
 

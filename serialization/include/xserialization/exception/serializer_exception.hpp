@@ -3,9 +3,11 @@
 
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "xserialization/context.hpp"
 #include "xserialization/exception/serialization_exception.hpp"
+#include "xserialization/inner/context_history.hpp"
 
 namespace xserialization::exception
 {
@@ -13,11 +15,11 @@ namespace xserialization::exception
     {
     public:
         explicit SerializerException(const Context &context)
-            :SerializationException(prepareContextedMessage(context, {}))
+            :SerializationException(prepareContextedMessage(context, inner::context_history::ContextHistory::history(), {}))
         {}
 
         SerializerException(const Context &context, std::string_view msg)
-            :SerializationException(prepareContextedMessage(context, msg)),
+            :SerializationException(prepareContextedMessage(context, inner::context_history::ContextHistory::history(), msg)),
             context(context)
         {}
 
@@ -29,7 +31,7 @@ namespace xserialization::exception
 
     private:
         static std::string prepareContextedMessage(const Context &context,
-                std::string_view msg);
+            const std::vector<Context> &history, std::string_view msg);
 
         Context context;
     };

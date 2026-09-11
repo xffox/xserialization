@@ -3,6 +3,7 @@
 
 #include <type_traits>
 #include <string>
+#include <memory>
 #include <cassert>
 
 #include "xserialization/inner/meta_object.hpp"
@@ -13,11 +14,11 @@
 
 namespace xserialization::inner
 {
-    template<typename Cl, typename T, FieldAttribute... attrs>
-    using FieldBase = std::conditional_t<
+    template<typename T, FieldAttribute... attrs>
+    using TargetFieldSerializer = std::conditional_t<
         (false || ... || (attrs == FieldAttribute::WEAK)),
-        xserialization::inner::field::WeakField<Cl, T>, \
-            xserialization::inner::field::IField<Cl>>;
+        xserialization::inner::field::WeakFieldSerializer<T>, \
+            xserialization::inner::field::FieldSerializer<T>>;
 
     template<typename T, FieldAttribute...>
     using FieldType = T;
@@ -78,30 +79,24 @@ inline constexpr auto MT_CLASS_ATTR_OPEN =
     xserialization::inner::ClassAttribute::OPEN;
 
 #define MT_INNER_FIELD(name, curclass, ...) \
-    static inline const struct _##name##FieldInitializerType: protected xserialization::inner::FieldBase<curclass, __VA_ARGS__> \
+    static inline const struct _##name##FieldInitializerType: protected xserialization::inner::field::IField<curclass> \
     { \
-        using xserialization::inner::FieldBase<curclass, __VA_ARGS__>::write; \
         _##name##FieldInitializerType() noexcept \
         { \
             [[maybe_unused]] const auto res = curclass::addField(#name, *this); \
             assert(res); \
         } \
-        void visit(xserialization::ISerializer &serializer, \
-            const curclass &cur) override final \
-        { \
-            const auto &value = cur.name; \
-            const xserialization::Context context(#name); \
-            xserialization::util::visitValue(serializer, value, context); \
-        } \
-        bool write(curclass &cur, \
-                xserialization::typeutil::WriteType< \
-                    xserialization::inner::FieldType<__VA_ARGS__>> value) override final \
-        { \
-            return xserialization::util::writeValue(cur.name, value); \
-        } \
         xserialization::inner::AttrMask attributes() const override final \
         { \
             return xserialization::inner::fieldAttributesMaskFromTail<__VA_ARGS__>(); \
+        } \
+        [[nodiscard]] std::unique_ptr<xserialization::ISerializer> makeSerializer(curclass &cur) const override \
+        { \
+            return std::make_unique<xserialization::inner::TargetFieldSerializer<__VA_ARGS__>>(cur.name); \
+        } \
+        [[nodiscard]] std::unique_ptr<xserialization::IDeserializer> makeDeserializer(const curclass &cur) const override \
+        { \
+            return std::make_unique<xserialization::inner::field::FieldDeserializer<std::decay_t<decltype(cur.name)>>>(cur.name, #name); \
         } \
     } _##name##FieldInitializer; \
     std::enable_if_t<&_##name##FieldInitializer != nullptr, xserialization::inner::FieldType<__VA_ARGS__>> name

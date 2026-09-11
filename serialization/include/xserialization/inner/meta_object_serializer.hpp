@@ -32,8 +32,8 @@ namespace xserialization::inner
 
         void write(const IDeserializer &value, const Context &context) override
         { return writeValue(context, value); }
-        void write(Null, const Context &context) override
-        { throw exception::SerializerException(context, "invalid null write"); }
+        void write(Null value, const Context &context) override
+        { return writeValue(context, value); }
         void write(bool value, const Context &context) override
         { return writeValue(context, value); }
         void write(char value, const Context &context) override
@@ -155,10 +155,7 @@ namespace xserialization::inner
         auto iter = fields.find(context.getName());
         if(iter != std::end(fields))
         {
-            if(!iter->second->write(object, value))
-            {
-                throw exception::TypeSerializerException(context, "invalid field write");
-            }
+            iter->second->makeSerializer(object)->write(value, Context{});
             unusedFields.erase(context.getName());
         }
         else

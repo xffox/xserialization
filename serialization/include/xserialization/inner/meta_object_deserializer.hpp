@@ -32,7 +32,7 @@ namespace xserialization::inner
             for(auto iter = std::begin(fields), endIter = std::end(fields);
                     iter != endIter; ++iter)
             {
-                iter->second->visit(serializer, object);
+                iter->second->makeDeserializer(object)->visit(serializer);
             }
         }
 

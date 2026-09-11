@@ -3,13 +3,18 @@
 
 #include <type_traits>
 #include <string>
+#include <utility>
+#include <memory>
 
+#include "xserialization/context.hpp"
 #include "xserialization/serializer.hpp"
 #include "xserialization/deserializer.hpp"
-#include "xserialization/context.hpp"
 #include "xserialization/typeutil.hpp"
 #include "xserialization/valutil.hpp"
+#include "xserialization/exception/serializer_exception.hpp"
+#include "xserialization/base_serializer.hpp"
 #include "xserialization/inner/attribute.hpp"
+#include "xserialization/util.hpp"
 
 namespace xserialization::inner::field
 {
@@ -22,80 +27,70 @@ namespace xserialization::inner::field
         [[nodiscard]]
         virtual AttrMask attributes() const = 0;
 
-        virtual void visit(ISerializer &serializer, const Cl &object) = 0;
-
-        virtual bool write(Cl&, const IDeserializer&)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, bool)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, char)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, signed char)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, unsigned char)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, short)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, unsigned short)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, int)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, unsigned int)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, long)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, unsigned long)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, long long)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, unsigned long long)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, float)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, double)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, long double)
-        {
-            return false;
-        }
-        virtual bool write(Cl&, const std::string&)
-        {
-            return false;
-        }
+        // TODO: remove the allocation
+        [[nodiscard]]
+        virtual std::unique_ptr<ISerializer> makeSerializer(Cl&) const = 0;
+        [[nodiscard]]
+        virtual std::unique_ptr<IDeserializer> makeDeserializer(const Cl&) const = 0;
     };
 
     template<typename Cl>
     IField<Cl>::~IField() = default;
+
+    template<typename T>
+    class FieldSerializer: public BaseSerializer
+    {
+    public:
+        explicit FieldSerializer(T &dst)
+            :dst(dst)
+        {}
+
+        [[nodiscard]]
+        Context::Type contextType() const override
+        {
+            return Context::TYPE_NONE;
+        }
+
+        using BaseSerializer::write;
+
+        void write(
+                typeutil::WriteType<T> value,
+                const Context &context) override
+        {
+            if(!xserialization::util::writeValue(dst, value))
+            {
+                throw exception::TypeSerializerException(context, "invalid field write");
+            }
+        }
+
+    protected:
+        T &dst;
+    };
+
+    template<typename T>
+    class FieldDeserializer: public IDeserializer
+    {
+    public:
+        explicit FieldDeserializer(const T &src, std::string name)
+            :src(src), name(std::move(name))
+        {}
+
+        [[nodiscard]]
+        Context::Type contextType() const override
+        {
+            return Context::TYPE_NONE;
+        }
+
+        void visit(ISerializer &serializer) const override
+        {
+            xserialization::util::visitValue(serializer, src, Context(name));
+        }
+
+    protected:
+        const T &src;
+        // TODO: string_view
+        std::string name;
+    };
 
     namespace inner
     {
@@ -104,48 +99,60 @@ namespace xserialization::inner::field
             (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>);
     }
 
-    template<typename Cl, typename Target, typename Cand, typename = void>
-    class BaseConvertedField: public virtual IField<Cl>
-    {};
+    template<typename Target, typename Cand, typename = void>
+    class BaseConvertedFieldSerializer: public virtual FieldSerializer<Target>
+    {
+        using FieldSerializer<Target>::FieldSerializer;
+    };
 
-    template<typename Cl, typename Target, typename Cand>
-    class BaseConvertedField<Cl, Target, Cand,
+    template<typename Target, typename Cand>
+    class BaseConvertedFieldSerializer<Target, Cand,
           std::enable_if_t<
               !std::is_same_v<Target, Cand> &&
               inner::IsWeakConvertible<Target> && inner::IsWeakConvertible<Cand> &&
               std::is_convertible_v<Cand, Target> &&
               std::is_floating_point_v<Target> >= std::is_floating_point_v<Cand>>>:
-                  public virtual IField<Cl>
+                  public virtual FieldSerializer<Target>
     {
     public:
-        bool write(Cl &object, Cand value) override
+        using FieldSerializer<Target>::FieldSerializer;
+
+        using FieldSerializer<Target>::write;
+
+        void write(Cand value, const Context &context) override
         {
+            if(context.getType() != Context::TYPE_NONE)
+            {
+                throw exception::SerializerException(context, "invalid context");
+            }
             if(!valutil::canAssign<Target>(value))
             {
-                return false;
+                throw exception::TypeSerializerException(context, "invalid field write");
             }
-            return static_cast<IField<Cl>&>(*this).write(object, static_cast<Target>(value));
+            return static_cast<FieldSerializer<Target>&>(*this).write(static_cast<Target>(value), context);
         }
     };
 
-    template<typename Cl, typename Target, typename... Cands>
-    class TargetConvertedField: public BaseConvertedField<Cl, Target, Cands>...
+    template<typename Target, typename... Cands>
+    class TargetConvertedField: public BaseConvertedFieldSerializer<Target, Cands>...
     {
     public:
-        using IField<Cl>::write;
+        using BaseConvertedFieldSerializer<Target, Cands>::BaseConvertedFieldSerializer...;
+
+        using FieldSerializer<Target>::write;
     };
 
-    template<typename Cl, typename Target>
+    template<typename Target>
     struct PartialTargetConvertedField
     {
         template<typename... Cands>
-        using Type = TargetConvertedField<Cl, Target, Cands...>;
+        using Type = TargetConvertedField<Target, Cands...>;
     };
 
-    template<typename Cl, typename Target>
-    using WeakField =
+    template<typename Target>
+    using WeakFieldSerializer =
         typename typeutil::SerializationTrivialTypes<
-            PartialTargetConvertedField<Cl, Target>::template Type>::Type;
+            PartialTargetConvertedField<Target>::template Type>::Type;
 }
 
 #endif

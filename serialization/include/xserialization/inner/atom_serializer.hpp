@@ -26,6 +26,8 @@ namespace xserialization::inner
     template<typename T>
     class AtomSerializer: public BaseSerializer
     {
+        using TargetArgType = typename inner::ArgType<T>::Type;
+
     public:
         explicit AtomSerializer(T &value)
             :value(value)
@@ -39,13 +41,19 @@ namespace xserialization::inner
             return Context::TYPE_NONE;
         }
 
-        void write(typename inner::ArgType<T>::Type value, const Context &context) override
+        void write(TargetArgType value, const Context &context) override
         {
             if(context.getType() != Context::TYPE_NONE)
             {
                 throw exception::SerializerException("invalid context");
             }
             this->value = value;
+        }
+
+    protected:
+        bool prepareContext(const Context::Type contextType) override
+        {
+            return contextType == Context::TYPE_NONE;
         }
 
     private:

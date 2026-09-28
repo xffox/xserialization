@@ -44,6 +44,8 @@ namespace xserialization::json::test
         CPPUNIT_TEST(testFloatToIntegerThrow);
         CPPUNIT_TEST(testHierarchy);
         CPPUNIT_TEST(testAtom);
+        CPPUNIT_TEST(testAtomInvalid);
+        CPPUNIT_TEST(testDataEmpty);
         CPPUNIT_TEST_SUITE_END();
     public:
         void testExactFields()
@@ -200,6 +202,41 @@ namespace xserialization::json::test
             ss<<std::to_string(exp);
             s<<JSON(ss.str());
             CPPUNIT_ASSERT_EQUAL(act, exp);
+        }
+
+        void testAtomInvalid()
+        {
+            int act{};
+            {
+                const std::string str("[]");
+                auto serializer = toSerializer(act);
+                CPPUNIT_ASSERT_THROW(serializer<<JSON(str),
+                    xserialization::exception::SerializationException);
+            }
+            {
+                const std::string str("{}");
+                auto serializer = toSerializer(act);
+                CPPUNIT_ASSERT_THROW(serializer<<JSON(str),
+                    xserialization::exception::SerializationException);
+            }
+        }
+
+        void testDataEmpty()
+        {
+            {
+                JSON act;
+                const std::string str("[]");
+                auto serializer = toSerializer(act);
+                serializer<<JSON(str);
+                CPPUNIT_ASSERT_EQUAL(std::string(act), std::string("[]"));
+            }
+            {
+                JSON act;
+                const std::string str("{}");
+                auto serializer = toSerializer(act);
+                serializer<<JSON(str);
+                CPPUNIT_ASSERT_EQUAL(std::string(act), std::string("{}"));
+            }
         }
     };
     CPPUNIT_TEST_SUITE_REGISTRATION(JSONDeserializerTest);

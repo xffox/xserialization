@@ -4,7 +4,6 @@
 #include "xserialization/context.hpp"
 #include "xserialization/serializer.hpp"
 #include "xserialization/deserializer.hpp"
-#include "xserialization/inner/atom_deserializer.hpp"
 #include "xserialization/exception/serializer_exception.hpp"
 
 namespace xserialization

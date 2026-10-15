@@ -26,7 +26,7 @@ template<typename T>
 struct xserialization::DeserializationTrait<T,
     std::void_t<xserialization::inner::MetaObjectTrait<T>>>
 {
-    using Deserializer = xserialization::inner::MetaObjectDeserializer<T>;
+    using Deserializer = xserialization::inner::MetaObjectDeserializer;
 
     static Deserializer toDeserializer(const T &value)
     {

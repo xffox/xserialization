@@ -1,12 +1,13 @@
 #include "xserialization/inner/meta_object_serializer.hpp"
-#include "xserialization/inner/meta_field.hpp"
 
 #include <iterator>
 #include <sstream>
 #include <type_traits>
 #include <utility>
 
+#include "xserialization/context.hpp"
 #include "xserialization/exception/serializer_exception.hpp"
+#include "xserialization/inner/meta_field.hpp"
 #include "xserialization/inner/attribute.hpp"
 
 namespace xserialization::inner

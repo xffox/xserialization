@@ -1,5 +1,8 @@
 #include "xserialization/base_serializer.hpp"
 
+#include "xserialization/inner/atom_deserializer.hpp"
+#include "xserialization/exception/serializer_exception.hpp"
+
 namespace xserialization
 {
     BaseSerializer::~BaseSerializer() = default;

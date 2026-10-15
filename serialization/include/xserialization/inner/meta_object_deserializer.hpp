@@ -1,43 +1,28 @@
 #ifndef XSERIALIZATION_INNER_METAOBJECTDESERIALIZER_HPP
 #define XSERIALIZATION_INNER_METAOBJECTDESERIALIZER_HPP
 
-#include <iterator>
-
+#include "xserialization/context.hpp"
 #include "xserialization/deserializer.hpp"
 #include "xserialization/inner/meta_object.hpp"
-#include "xserialization/exception/deserializer_exception.hpp"
 
 namespace xserialization::inner
 {
-    template<typename T>
     class MetaObjectDeserializer: public IDeserializer
     {
     public:
+        template<typename T>
         explicit MetaObjectDeserializer(const T &object)
-            :object(object)
+            :object(object), fields_(object::MetaObjectTrait<T>::TYPE::fields())
         {}
 
-        Context::Type contextType() const override
-        {
-            return Context::TYPE_NAME;
-        }
+        [[nodiscard]]
+        Context::Type contextType() const override;
 
-        void visit(ISerializer &serializer) const override
-        {
-            if(serializer.contextType() != Context::TYPE_NAME)
-            {
-                throw exception::DeserializerException("invalid context type");
-            }
-            const auto &fields = object.fields();
-            for(auto iter = std::begin(fields), endIter = std::end(fields);
-                    iter != endIter; ++iter)
-            {
-                iter->second->makeDeserializer(&object)->visit(serializer);
-            }
-        }
+        void visit(ISerializer &serializer) const override;
 
     private:
-        const T &object;
+        const object::MetaObject &object;
+        const object::MetaObject::FieldMap &fields_;
     };
 }
 

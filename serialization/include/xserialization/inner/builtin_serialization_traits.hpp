@@ -14,7 +14,7 @@ template<typename T>
 struct xserialization::SerializationTrait<T,
     std::void_t<xserialization::inner::MetaObjectTrait<T>>>
 {
-    using Serializer = xserialization::inner::MetaObjectSerializer<T>;
+    using Serializer = xserialization::inner::MetaObjectSerializer;
 
     static Serializer toSerializer(T &value)
     {

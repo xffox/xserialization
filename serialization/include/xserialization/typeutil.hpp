@@ -13,11 +13,43 @@ namespace xserialization::typeutil
     template<typename... Args>
     struct TypeList
     {
+    private:
+        template<template<typename> typename F>
+        struct FuncFilter
+        {
+        private:
+            template<typename Dummy, typename... FilterArgs>
+            struct ApplyFuncFilter;
+            template<typename Dummy, typename FilterArg, typename... FilterArgs>
+            struct ApplyFuncFilter<Dummy, FilterArg, FilterArgs...>
+            {
+            private:
+                using Res =typename ApplyFuncFilter<Dummy, FilterArgs...>::Type;
+            public:
+                using Type = std::conditional_t<F<FilterArg>::value,
+                      typename Res::template Prepend<FilterArg>, Res>;
+            };
+            template<typename Dummy>
+            struct ApplyFuncFilter<Dummy>
+            {
+                using Type = TypeList<>;
+            };
+        public:
+            using Type = typename ApplyFuncFilter<void, Args...>::Type;
+        };
+
+    public:
         template<typename... As>
         using Append = TypeList<Args..., As...>;
 
+        template<typename... As>
+        using Prepend = TypeList<As..., Args...>;
+
         template<template<typename...> class Container>
         using Apply = Container<Args...>;
+
+        template<template<typename> typename F>
+        using Filter = typename FuncFilter<F>::Type;
     };
 
     template<template<typename...> class Container>
@@ -36,15 +68,15 @@ namespace xserialization::typeutil
     {
         using Type = Container<float, double, long double>;
     };
-    template<template<typename...> class Container>
-    struct SerializationTrivialTypes
-    {
-        using Type =
-            SerializationSignedIntegerTypes<
+    using SerializationTrivialTypeList = SerializationSignedIntegerTypes<
             SerializationUnsignedIntegerTypes<
             SerializationFloatingPointTypes<
                 TypeList<bool, char, std::string>::Append>
-                ::Type::Append>::Type::Append>::Type::Apply<Container>;
+                ::Type::Append>::Type::Append>::Type;
+    template<template<typename...> class Container>
+    struct SerializationTrivialTypes
+    {
+        using Type = SerializationTrivialTypeList::Apply<Container>;
     };
 
     template<typename T>

@@ -18,53 +18,19 @@
 
 namespace xserialization::inner::field
 {
-    template<typename Cl>
     class IField
     {
     public:
-        virtual ~IField() = 0;
+        virtual ~IField() = default;
 
         [[nodiscard]]
         virtual AttrMask attributes() const = 0;
 
         // TODO: remove the allocation
         [[nodiscard]]
-        virtual std::unique_ptr<ISerializer> makeSerializer(Cl&) const = 0;
+        virtual std::unique_ptr<ISerializer> makeSerializer(void*) const = 0;
         [[nodiscard]]
-        virtual std::unique_ptr<IDeserializer> makeDeserializer(const Cl&) const = 0;
-    };
-
-    template<typename Cl>
-    IField<Cl>::~IField() = default;
-
-    template<typename T>
-    class FieldSerializer: public BaseSerializer
-    {
-    public:
-        explicit FieldSerializer(T &dst)
-            :dst(dst)
-        {}
-
-        [[nodiscard]]
-        Context::Type contextType() const override
-        {
-            return Context::TYPE_NONE;
-        }
-
-        using BaseSerializer::write;
-
-        void write(
-                typeutil::WriteType<T> value,
-                const Context &context) override
-        {
-            if(!xserialization::util::writeValue(dst, value))
-            {
-                throw exception::TypeSerializerException(context, "invalid field write");
-            }
-        }
-
-    protected:
-        T &dst;
+        virtual std::unique_ptr<IDeserializer> makeDeserializer(const void*) const = 0;
     };
 
     template<typename T>
@@ -97,27 +63,26 @@ namespace xserialization::inner::field
         template<typename T>
         inline constexpr bool IsWeakConvertible =
             (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>);
+
+        template<typename Target>
+        struct ShouldConvert
+        {
+            template<typename Cand>
+            struct Apply
+            {
+                static constexpr auto value = !std::is_same_v<Target, Cand> &&
+                    inner::IsWeakConvertible<Target> && inner::IsWeakConvertible<Cand> &&
+                    std::is_convertible_v<Cand, Target> &&
+                    std::is_floating_point_v<Target> >= std::is_floating_point_v<Cand>;
+            };
+        };
     }
 
-    template<typename Target, typename Cand, typename = void>
-    class BaseConvertedFieldSerializer: public virtual FieldSerializer<Target>
-    {
-        using FieldSerializer<Target>::FieldSerializer;
-    };
-
     template<typename Target, typename Cand>
-    class BaseConvertedFieldSerializer<Target, Cand,
-          std::enable_if_t<
-              !std::is_same_v<Target, Cand> &&
-              inner::IsWeakConvertible<Target> && inner::IsWeakConvertible<Cand> &&
-              std::is_convertible_v<Cand, Target> &&
-              std::is_floating_point_v<Target> >= std::is_floating_point_v<Cand>>>:
-                  public virtual FieldSerializer<Target>
+    class BaseConvertedFieldSerializer: public virtual BaseSerializer
     {
     public:
-        using FieldSerializer<Target>::FieldSerializer;
-
-        using FieldSerializer<Target>::write;
+        using BaseSerializer::write;
 
         void write(Cand value, const Context &context) override
         {
@@ -129,30 +94,66 @@ namespace xserialization::inner::field
             {
                 throw exception::TypeSerializerException(context, "invalid field write");
             }
-            return static_cast<FieldSerializer<Target>&>(*this).write(static_cast<Target>(value), context);
+            return static_cast<ISerializer&>(*this).write(static_cast<Target>(value), context);
         }
     };
 
     template<typename Target, typename... Cands>
-    class TargetConvertedField: public BaseConvertedFieldSerializer<Target, Cands>...
+    class TargetConvertedFieldWithBases: public Cands...
     {
     public:
-        using BaseConvertedFieldSerializer<Target, Cands>::BaseConvertedFieldSerializer...;
+        explicit TargetConvertedFieldWithBases(Target &dst)
+            :dst(dst)
+        {}
 
-        using FieldSerializer<Target>::write;
+        [[nodiscard]]
+        Context::Type contextType() const override
+        {
+            return Context::TYPE_NONE;
+        }
+
+        using Cands::write...;
+
+        void write(
+                typeutil::WriteType<Target> value,
+                const Context &context) override
+        {
+            if(!xserialization::util::writeValue(dst, value))
+            {
+                throw exception::TypeSerializerException(context, "invalid field write");
+            }
+        }
+
+    protected:
+        Target &dst;
+    };
+
+    template<typename Target, typename... Cands>
+    struct TargetConvertedField
+    {
+        using Type = TargetConvertedFieldWithBases<Target, BaseConvertedFieldSerializer<Target, Cands>...>;
+    };
+    template<typename Target>
+    struct TargetConvertedField<Target>
+    {
+        using Type = TargetConvertedFieldWithBases<Target, BaseSerializer>;
     };
 
     template<typename Target>
     struct PartialTargetConvertedField
     {
         template<typename... Cands>
-        using Type = TargetConvertedField<Target, Cands...>;
+        using Type = typename TargetConvertedField<Target, Cands...>::Type;
     };
 
     template<typename Target>
+    using FieldSerializer = typename TargetConvertedField<Target>::Type;
+
+    template<typename Target>
     using WeakFieldSerializer =
-        typename typeutil::SerializationTrivialTypes<
-            PartialTargetConvertedField<Target>::template Type>::Type;
+        typename typeutil::SerializationTrivialTypeList::Filter<
+            inner::ShouldConvert<Target>::template Apply>::template Apply<
+                PartialTargetConvertedField<Target>::template Type>;
 }
 
 #endif

@@ -79,7 +79,7 @@ inline constexpr auto MT_CLASS_ATTR_OPEN =
     xserialization::inner::ClassAttribute::OPEN;
 
 #define MT_INNER_FIELD(name, curclass, ...) \
-    static inline const struct _##name##FieldInitializerType: protected xserialization::inner::field::IField<curclass> \
+    static inline const struct _##name##FieldInitializerType: protected xserialization::inner::field::IField \
     { \
         _##name##FieldInitializerType() noexcept \
         { \
@@ -90,12 +90,14 @@ inline constexpr auto MT_CLASS_ATTR_OPEN =
         { \
             return xserialization::inner::fieldAttributesMaskFromTail<__VA_ARGS__>(); \
         } \
-        [[nodiscard]] std::unique_ptr<xserialization::ISerializer> makeSerializer(curclass &cur) const override \
+        [[nodiscard]] std::unique_ptr<xserialization::ISerializer> makeSerializer(void *inst) const override \
         { \
+            auto &cur = *static_cast<curclass*>(inst); \
             return std::make_unique<xserialization::inner::TargetFieldSerializer<__VA_ARGS__>>(cur.name); \
         } \
-        [[nodiscard]] std::unique_ptr<xserialization::IDeserializer> makeDeserializer(const curclass &cur) const override \
+        [[nodiscard]] std::unique_ptr<xserialization::IDeserializer> makeDeserializer(const void *inst) const override \
         { \
+            const auto &cur = *static_cast<const curclass*>(inst); \
             return std::make_unique<xserialization::inner::field::FieldDeserializer<std::decay_t<decltype(cur.name)>>>(cur.name, #name); \
         } \
     } _##name##FieldInitializer; \

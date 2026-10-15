@@ -8,22 +8,29 @@
 #include <utility>
 
 #include "xserialization/inner/attribute.hpp"
-#include "xserialization/inner/meta_field.hpp"
 
 namespace xserialization::inner
 {
+    namespace field
+    {
+        class IField;
+    };
+
     namespace object
     {
         class MetaObject
-        {};
+        {
+        public:
+            using FieldMap = std::unordered_map<std::string, field::IField*>;
+            using Attrs = AttrMask;
+        };
 
         template<class T, AttrMask classAttributes>
-        class MetaObjectBase: protected MetaObject
+        class MetaObjectBase: public MetaObject
         {
         protected:
             using CurClass = T;
             using BaseClass = MetaObjectBase;
-            using FieldMap = std::unordered_map<std::string, field::IField<T>*>;
 
         public:
             [[nodiscard]]
@@ -39,7 +46,7 @@ namespace xserialization::inner
             }
 
         protected:
-            static bool addField(const std::string &name, field::IField<T> &field) noexcept
+            static bool addField(const std::string &name, field::IField &field) noexcept
             {
                 try
                 {

@@ -2,8 +2,6 @@
 #define XSERIALIZATION_INNER_METAFIELD_HPP
 
 #include <type_traits>
-#include <utility>
-#include <memory>
 
 #include "xserialization/context.hpp"
 #include "xserialization/serializer.hpp"
@@ -107,9 +105,6 @@ namespace xserialization::inner::field
         template<typename... Cands>
         using Type = typename TargetConvertedField<Target, Cands...>::Type;
     };
-
-    template<typename Target>
-    using FieldSerializer = typename TargetConvertedField<Target>::Type;
 
     template<typename Target>
     using WeakFieldSerializer =

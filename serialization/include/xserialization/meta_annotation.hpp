@@ -7,19 +7,14 @@
 
 #include "xserialization/inner/meta_object.hpp"
 #include "xserialization/inner/meta_field.hpp"
-#include "xserialization/typeutil.hpp"
-#include "xserialization/util.hpp"
 #include "xserialization/operator.hpp"
 #include "xserialization/inner/attribute.hpp"
 #include "xserialization/inner/builtin_serialization_traits.hpp"
 
 namespace xserialization::inner
 {
-    template<typename T, FieldAttribute... attrs>
-    using TargetFieldSerializer = std::conditional_t<
-        (false || ... || (attrs == FieldAttribute::WEAK)),
-        xserialization::inner::field::WeakFieldSerializer<T>, \
-            xserialization::inner::field::FieldSerializer<T>>;
+    template<typename, FieldAttribute... attrs>
+    inline constexpr auto HasWeakAttr = (false || ... || (attrs == FieldAttribute::WEAK));
 
     template<typename T, FieldAttribute...>
     using FieldType = T;
@@ -77,12 +72,19 @@ namespace xserialization::inner
         serializer.write(toDeserializer(value), context);
     }
 
-    template<typename TargetSerializer, typename V>
+    template<bool weak, typename V>
     void writeField(V &target, const IDeserializer &value)
     {
         auto serializer = toSerializer(target);
-        TargetSerializer fieldSerializer(serializer);
-        fieldSerializer.write(value, Context{});
+        if constexpr(weak)
+        {
+            field::WeakFieldSerializer<std::decay_t<V>> weakSerializer(serializer);
+            weakSerializer.write(value, Context{});
+        }
+        else
+        {
+            serializer.write(value, Context{});
+        }
     }
 }
 
@@ -108,7 +110,7 @@ inline constexpr auto MT_CLASS_ATTR_OPEN =
         } \
         void write(void *inst, const xserialization::IDeserializer &value) const \
         { \
-            xserialization::inner::writeField<xserialization::inner::TargetFieldSerializer<__VA_ARGS__>>( \
+            xserialization::inner::writeField<xserialization::inner::HasWeakAttr<__VA_ARGS__>>( \
                 static_cast<curclass*>(inst)->name, value); \
         } \
         void visit(xserialization::ISerializer &serializer, const void *inst) const override \

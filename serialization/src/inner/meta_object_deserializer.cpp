@@ -19,7 +19,7 @@ namespace xserialization::inner
         }
         for(const auto &[name, field] : fields_)
         {
-            field->makeDeserializer(&object)->visit(serializer);
+            field->visit(serializer, &object);
         }
     }
 }

@@ -204,17 +204,30 @@ namespace xserialization::json::test
             CPPUNIT_ASSERT_EQUAL(act, exp);
         }
 
+        MT_STRUCT(NestedValue)
+        {
+            MT_FIELD(val, int);
+        };
+
         void testAtomInvalid()
         {
-            int act{};
             {
+                int act{};
                 const std::string str("[]");
                 auto serializer = toSerializer(act);
                 CPPUNIT_ASSERT_THROW(serializer<<JSON(str),
                     xserialization::exception::SerializationException);
             }
             {
+                int act{};
                 const std::string str("{}");
+                auto serializer = toSerializer(act);
+                CPPUNIT_ASSERT_THROW(serializer<<JSON(str),
+                    xserialization::exception::SerializationException);
+            }
+            {
+                NestedValue act{};
+                const std::string str(R"({"val": [3, 7, 1]})");
                 auto serializer = toSerializer(act);
                 CPPUNIT_ASSERT_THROW(serializer<<JSON(str),
                     xserialization::exception::SerializationException);

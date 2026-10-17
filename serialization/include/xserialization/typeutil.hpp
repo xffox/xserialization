@@ -71,7 +71,7 @@ namespace xserialization::typeutil
     using SerializationTrivialTypeList = SerializationSignedIntegerTypes<
             SerializationUnsignedIntegerTypes<
             SerializationFloatingPointTypes<
-                TypeList<bool, char, std::string>::Append>
+                TypeList<bool, char, std::string, Null>::Append>
                 ::Type::Append>::Type::Append>::Type;
     template<template<typename...> class Container>
     struct SerializationTrivialTypes

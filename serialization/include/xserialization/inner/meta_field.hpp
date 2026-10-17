@@ -2,7 +2,6 @@
 #define XSERIALIZATION_INNER_METAFIELD_HPP
 
 #include <type_traits>
-#include <string>
 #include <utility>
 #include <memory>
 
@@ -12,9 +11,13 @@
 #include "xserialization/typeutil.hpp"
 #include "xserialization/valutil.hpp"
 #include "xserialization/exception/serializer_exception.hpp"
-#include "xserialization/base_serializer.hpp"
+#include "xserialization/inner/wrap_serializer.hpp"
 #include "xserialization/inner/attribute.hpp"
-#include "xserialization/util.hpp"
+
+namespace xserialization
+{
+    class IDeserializer;
+}
 
 namespace xserialization::inner::field
 {
@@ -27,35 +30,8 @@ namespace xserialization::inner::field
         virtual AttrMask attributes() const = 0;
 
         // TODO: remove the allocation
-        [[nodiscard]]
-        virtual std::unique_ptr<ISerializer> makeSerializer(void*) const = 0;
-        [[nodiscard]]
-        virtual std::unique_ptr<IDeserializer> makeDeserializer(const void*) const = 0;
-    };
-
-    template<typename T>
-    class FieldDeserializer: public IDeserializer
-    {
-    public:
-        explicit FieldDeserializer(const T &src, std::string name)
-            :src(src), name(std::move(name))
-        {}
-
-        [[nodiscard]]
-        Context::Type contextType() const override
-        {
-            return Context::TYPE_NONE;
-        }
-
-        void visit(ISerializer &serializer) const override
-        {
-            xserialization::util::visitValue(serializer, src, Context(name));
-        }
-
-    protected:
-        const T &src;
-        // TODO: string_view
-        std::string name;
+        virtual void write(void *inst, const IDeserializer &value) const = 0;
+        virtual void visit(ISerializer &serializer, const void *inst) const = 0;
     };
 
     namespace inner
@@ -79,10 +55,10 @@ namespace xserialization::inner::field
     }
 
     template<typename Target, typename Cand>
-    class BaseConvertedFieldSerializer: public virtual BaseSerializer
+    class BaseConvertedFieldSerializer: public virtual WrapSerializer
     {
     public:
-        using BaseSerializer::write;
+        using WrapSerializer::WrapSerializer;
 
         void write(Cand value, const Context &context) override
         {
@@ -102,30 +78,16 @@ namespace xserialization::inner::field
     class TargetConvertedFieldWithBases: public Cands...
     {
     public:
-        explicit TargetConvertedFieldWithBases(Target &dst)
-            :dst(dst)
-        {}
-
-        [[nodiscard]]
-        Context::Type contextType() const override
-        {
-            return Context::TYPE_NONE;
-        }
-
-        using Cands::write...;
-
-        void write(
-                typeutil::WriteType<Target> value,
-                const Context &context) override
-        {
-            if(!xserialization::util::writeValue(dst, value))
-            {
-                throw exception::TypeSerializerException(context, "invalid field write");
-            }
-        }
+        using Cands::Cands...;
+        using ISerializer::write;
 
     protected:
-        Target &dst;
+        void visitWrapped(ISerializer &serializer,
+            const IDeserializer &deserializer) const override
+        {
+            TargetConvertedFieldWithBases wrappedSerializer(serializer);
+            deserializer.visit(wrappedSerializer);
+        }
     };
 
     template<typename Target, typename... Cands>
@@ -136,7 +98,7 @@ namespace xserialization::inner::field
     template<typename Target>
     struct TargetConvertedField<Target>
     {
-        using Type = TargetConvertedFieldWithBases<Target, BaseSerializer>;
+        using Type = TargetConvertedFieldWithBases<Target, WrapSerializer>;
     };
 
     template<typename Target>

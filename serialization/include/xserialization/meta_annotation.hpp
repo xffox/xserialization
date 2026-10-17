@@ -3,14 +3,15 @@
 
 #include <type_traits>
 #include <string>
-#include <memory>
 #include <cassert>
 
 #include "xserialization/inner/meta_object.hpp"
 #include "xserialization/inner/meta_field.hpp"
 #include "xserialization/typeutil.hpp"
 #include "xserialization/util.hpp"
+#include "xserialization/operator.hpp"
 #include "xserialization/inner/attribute.hpp"
+#include "xserialization/inner/builtin_serialization_traits.hpp"
 
 namespace xserialization::inner
 {
@@ -68,6 +69,21 @@ namespace xserialization::inner
         return ValList<attrs...>::template Init<
             ClassAttributesMaskContainer>::VALUE;
     }
+
+    template<typename V>
+    void visitField(xserialization::ISerializer &serializer, const V &value,
+        const Context &context)
+    {
+        serializer.write(toDeserializer(value), context);
+    }
+
+    template<typename TargetSerializer, typename V>
+    void writeField(V &target, const IDeserializer &value)
+    {
+        auto serializer = toSerializer(target);
+        TargetSerializer fieldSerializer(serializer);
+        fieldSerializer.write(value, Context{});
+    }
 }
 
 inline constexpr auto MT_FIELD_ATTR_WEAK =
@@ -90,15 +106,15 @@ inline constexpr auto MT_CLASS_ATTR_OPEN =
         { \
             return xserialization::inner::fieldAttributesMaskFromTail<__VA_ARGS__>(); \
         } \
-        [[nodiscard]] std::unique_ptr<xserialization::ISerializer> makeSerializer(void *inst) const override \
+        void write(void *inst, const xserialization::IDeserializer &value) const \
         { \
-            auto &cur = *static_cast<curclass*>(inst); \
-            return std::make_unique<xserialization::inner::TargetFieldSerializer<__VA_ARGS__>>(cur.name); \
+            xserialization::inner::writeField<xserialization::inner::TargetFieldSerializer<__VA_ARGS__>>( \
+                static_cast<curclass*>(inst)->name, value); \
         } \
-        [[nodiscard]] std::unique_ptr<xserialization::IDeserializer> makeDeserializer(const void *inst) const override \
+        void visit(xserialization::ISerializer &serializer, const void *inst) const override \
         { \
-            const auto &cur = *static_cast<const curclass*>(inst); \
-            return std::make_unique<xserialization::inner::field::FieldDeserializer<std::decay_t<decltype(cur.name)>>>(cur.name, #name); \
+            xserialization::inner::visitField(serializer, \
+                static_cast<const curclass*>(inst)->name, xserialization::Context(#name)); \
         } \
     } _##name##FieldInitializer; \
     std::enable_if_t<&_##name##FieldInitializer != nullptr, xserialization::inner::FieldType<__VA_ARGS__>> name

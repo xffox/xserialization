@@ -9,6 +9,8 @@
 #include "xserialization/exception/serializer_exception.hpp"
 #include "xserialization/inner/meta_field.hpp"
 #include "xserialization/inner/attribute.hpp"
+#include "xserialization/operator.hpp"
+#include "xserialization/inner/builtin_serialization_traits.hpp"
 
 namespace xserialization::inner
 {
@@ -91,9 +93,10 @@ namespace xserialization::inner
     template<typename V>
     void MetaObjectSerializer::writeValue(const Context &context, const V &value)
     {
+        constexpr auto valueTrivial = !std::is_same_v<std::decay_t<V>, IDeserializer>;
         if(context.getType() == Context::TYPE_NONE)
         {
-            if constexpr(std::is_same_v<std::decay_t<V>, IDeserializer>)
+            if constexpr(!valueTrivial)
             {
                 if(value.contextType() == Context::TYPE_NAME)
                 {
@@ -139,7 +142,14 @@ namespace xserialization::inner
         if(const auto iter = fields_.find(context.getName());
             iter != std::end(fields_))
         {
-            iter->second->makeSerializer(&object)->write(value, Context{});
+            if constexpr(valueTrivial)
+            {
+                iter->second->write(&object, toDeserializer(value));
+            }
+            else
+            {
+                iter->second->write(&object, value);
+            }
             unusedFields.erase(context.getName());
         }
         else
